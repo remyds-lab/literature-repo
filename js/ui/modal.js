@@ -38,6 +38,14 @@ function updateStatusOptions(group, selectedStatus = '') {
   select.value = statuses.includes(selectedStatus) ? selectedStatus : statuses[0];
 }
 
+function updateGenreSuggestions() {
+  const suggestions = $('#genreSuggestions');
+  if (!suggestions) return;
+  const genres = [...new Set(getItems().flatMap(item => (item.genre || '')
+    .split(',').map(genre => genre.trim()).filter(Boolean)))].sort((a, b) => a.localeCompare(b));
+  suggestions.innerHTML = genres.map(genre => `<option value="${escapeHtml(genre)}"></option>`).join('');
+}
+
 function renderCommentHistory(item) {
   const history = $('#commentHistory');
   const list = $('#commentHistoryList');
@@ -64,6 +72,12 @@ export function setupModal() {
     if (e.target === $('#itemModal')) closeModal();
   });
   $('#itemForm')?.addEventListener('submit', handleSave);
+  $('#itemForm')?.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.isComposing) return;
+    if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLButtonElement) return;
+    e.preventDefault();
+    e.currentTarget.requestSubmit();
+  });
   $('#fGroup')?.addEventListener('change', () => {
     const group = $('#fGroup').value;
     updateCategoryOptions(group);
@@ -96,6 +110,7 @@ export function setupModal() {
 
 export function openModal(item = null, prefill = null) {
   editId = null;
+  updateGenreSuggestions();
   const form = $('#itemForm');
   if (form) form.reset();
   

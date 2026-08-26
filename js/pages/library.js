@@ -96,11 +96,11 @@ export function renderLibrary() {
   });
 
   if (sortBy === 'title') {
-    filtered.sort((a, b) => a.title.localeCompare(b.title));
+    filtered.sort((a, b) => priorityOf(b) - priorityOf(a) || a.title.localeCompare(b.title));
   } else if (sortBy === 'rating') {
-    filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    filtered.sort((a, b) => priorityOf(b) - priorityOf(a) || (b.rating || 0) - (a.rating || 0));
   } else {
-    filtered.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+    filtered.sort((a, b) => priorityOf(b) - priorityOf(a) || new Date(b.dateAdded) - new Date(a.dateAdded));
   }
 
   const grid = $('#libraryGrid');
@@ -120,4 +120,8 @@ export function renderLibrary() {
       if (item) openModal(item);
     });
   });
+}
+
+function priorityOf(item) {
+  return item.status === 'Planeo Leer' ? 1 : 0;
 }
