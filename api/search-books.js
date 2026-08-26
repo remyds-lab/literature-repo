@@ -2,28 +2,28 @@
 // Endpoint: GET /api/search-books?q=<query>
 
 module.exports = async function handler(req, res) {
-  const query = req.query.q;
+  const query = String(req.query?.q || '').trim();
   if (!query) {
     return res.status(400).json({ error: 'Missing query parameter "q"' });
   }
 
   const encodedQuery = encodeURIComponent(query);
-  const mode = req.query.mode === 'author' ? 'author' : 'title';
+  const mode = req.query?.mode === 'author' ? 'author' : 'title';
   const openLibraryQuery = mode === 'author' ? `author:${encodedQuery}` : `title:${encodedQuery}`;
   const googleQuery = mode === 'author' ? `inauthor:${encodedQuery}` : `intitle:${encodedQuery}`;
   const hathiPath = mode === 'author' ? 'author' : 'title';
   const requests = [
-    fetch(`https://openlibrary.org/search.json?q=${openLibraryQuery}&limit=40&fields=title,author_name,first_publish_year,cover_i,key,subject`)
+    fetchJson(`https://openlibrary.org/search.json?q=${openLibraryQuery}&limit=40&fields=title,author_name,first_publish_year,cover_i,key,subject`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`Open Library API returned ${response.status}`))),
-    fetch(`https://www.googleapis.com/books/v1/volumes?q=${googleQuery}&maxResults=40`)
+    fetchJson(`https://www.googleapis.com/books/v1/volumes?q=${googleQuery}&maxResults=40`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`Google Books API returned ${response.status}`))),
-    fetch(`https://catalog.hathitrust.org/api/volumes/brief/${hathiPath}/${encodedQuery}.json`)
+    fetchJson(`https://catalog.hathitrust.org/api/volumes/brief/${hathiPath}/${encodedQuery}.json`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`HathiTrust API returned ${response.status}`))),
-    fetch(`https://archive.org/advancedsearch.php?q=${mode === 'author' ? `creator:%22${encodedQuery}%22` : `title:%22${encodedQuery}%22`}&fl[]=identifier,title,description,creator,year&rows=40&output=json`)
+    fetchJson(`https://archive.org/advancedsearch.php?q=${mode === 'author' ? `creator:%22${encodedQuery}%22` : `title:%22${encodedQuery}%22`}&fl[]=identifier,title,description,creator,year&rows=40&output=json`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`Internet Archive API returned ${response.status}`))),
-    fetch(`https://gutendex.com/books/?search=${encodedQuery}&page=1`)
+    fetchJson(`https://gutendex.com/books/?search=${encodedQuery}&page=1`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`Gutendex API returned ${response.status}`))),
-    fetch(`https://librivox.org/api/feed/audiobooks?${mode === 'author' ? 'author' : 'title'}=${encodedQuery}&format=json&limit=40`)
+    fetchJson(`https://librivox.org/api/feed/audiobooks?${mode === 'author' ? 'author' : 'title'}=${encodedQuery}&format=json&limit=40`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`LibriVox API returned ${response.status}`))),
   ];
 
@@ -138,3 +138,13 @@ module.exports = async function handler(req, res) {
 
   return res.status(200).json({ source: 'multiple-catalogs', results: uniqueResults });
 };
+
+async function fetchJson(url, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}

@@ -22,14 +22,14 @@ module.exports = async function handler(req, res) {
   const requests = [];
   if (tmdbKey) {
     requests.push(Promise.all([1, 2].map(page =>
-      fetch(`https://api.themoviedb.org/3/search/multi?api_key=${encodeURIComponent(tmdbKey)}&language=es-ES&query=${encodeURIComponent(query)}&page=${page}`)
+      fetchWithTimeout(`https://api.themoviedb.org/3/search/multi?api_key=${encodeURIComponent(tmdbKey)}&language=es-ES&query=${encodeURIComponent(query)}&page=${page}`)
         .then(response => response.ok ? response.json() : Promise.reject(new Error(`TMDB API returned ${response.status}`)))
     )).then(pages => pages.flatMap(page => page.results || [])));
     if (mode !== 'title') {
-      requests.push(fetch(`https://api.themoviedb.org/3/search/person?api_key=${encodeURIComponent(tmdbKey)}&language=es-ES&query=${encodeURIComponent(query)}`)
+      requests.push(fetchWithTimeout(`https://api.themoviedb.org/3/search/person?api_key=${encodeURIComponent(tmdbKey)}&language=es-ES&query=${encodeURIComponent(query)}`)
         .then(response => response.ok ? response.json() : Promise.reject(new Error(`TMDB people API returned ${response.status}`)))
         .then(data => Promise.all((data.results || []).slice(0, 5).map(person =>
-          fetch(`https://api.themoviedb.org/3/person/${person.id}/combined_credits?api_key=${encodeURIComponent(tmdbKey)}&language=es-ES`)
+          fetchWithTimeout(`https://api.themoviedb.org/3/person/${person.id}/combined_credits?api_key=${encodeURIComponent(tmdbKey)}&language=es-ES`)
             .then(response => response.ok ? response.json() : Promise.reject(new Error(`TMDB credits API returned ${response.status}`)))
             .then(credits => mode === 'actor'
               ? (credits.cast || [])
@@ -38,7 +38,7 @@ module.exports = async function handler(req, res) {
     }
   }
   if (omdbKey) {
-    requests.push(fetch(`https://www.omdbapi.com/?apikey=${encodeURIComponent(omdbKey)}&s=${encodeURIComponent(query)}&type=&r=json`)
+    requests.push(fetchWithTimeout(`https://www.omdbapi.com/?apikey=${encodeURIComponent(omdbKey)}&s=${encodeURIComponent(query)}&type=&r=json`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`OMDB API returned ${response.status}`)))
       .then(data => data.Response === 'False' ? [] : (data.Search || []).map(item => ({
         title: item.Title || 'Sin título', description: `${item.Type || ''} · ${item.Year || ''}`.trim(),
@@ -46,14 +46,14 @@ module.exports = async function handler(req, res) {
         type: item.Type === 'series' ? 'Series' : 'Movie', year: item.Year || '',
       }))));
   }
-  requests.push(fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(query)}`)
+  requests.push(fetchWithTimeout(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(query)}`)
     .then(response => response.ok ? response.json() : Promise.reject(new Error(`TVMaze API returned ${response.status}`)))
     .then(data => (data || []).slice(0, 40).map(item => ({
       title: item.show?.name || 'Sin título', description: item.show?.summary?.replace(/<[^>]*>/g, '').slice(0, 200) || '',
       genre: item.show?.genres?.join(', ') || '', chapters: null, image: item.show?.image?.original || item.show?.image?.medium || '',
       url: item.show?.url || '', type: 'Series', year: item.show?.premiered?.slice(0, 4) || '',
     }))));
-  requests.push(fetch(`https://v3.sg.media-imdb.com/suggestion/x/${encodedQuery}.json`)
+  requests.push(fetchWithTimeout(`https://v3.sg.media-imdb.com/suggestion/x/${encodedQuery}.json`)
     .then(response => response.ok ? response.json() : Promise.reject(new Error(`IMDb API returned ${response.status}`)))
     .then(data => (data.d || []).slice(0, 40).map(item => ({
       title: item.l || 'Sin título', description: item.s || '', genre: '', chapters: null,
@@ -61,10 +61,10 @@ module.exports = async function handler(req, res) {
       type: item.q?.toLowerCase().includes('series') || item.q?.toLowerCase().includes('tv') ? 'Series' : 'Movie', year: item.y || '',
     }))));
   if (mode !== 'title') {
-    requests.push(fetch(`https://api.tvmaze.com/search/people?q=${encodeURIComponent(query)}`)
+    requests.push(fetchWithTimeout(`https://api.tvmaze.com/search/people?q=${encodeURIComponent(query)}`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`TVMaze people API returned ${response.status}`)))
       .then(people => Promise.all((people || []).slice(0, 5).map(person =>
-        fetch(`https://api.tvmaze.com/people/${person.person.id}?embed=${mode === 'actor' ? 'castcredits' : 'crewcredits'}`)
+        fetchWithTimeout(`https://api.tvmaze.com/people/${person.person.id}?embed=${mode === 'actor' ? 'castcredits' : 'crewcredits'}`)
           .then(response => response.ok ? response.json() : Promise.reject(new Error(`TVMaze credits API returned ${response.status}`)))
           .then(personData => {
             const credits = personData._embedded?.[mode === 'actor' ? 'castcredits' : 'crewcredits'] || [];
@@ -115,3 +115,13 @@ module.exports = async function handler(req, res) {
     }],
   });
 };
+
+async function fetchWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
