@@ -131,11 +131,6 @@
       <button class="library-group-tab" data-group="visual">Visual</button>
     </div>
 
-    <!-- Genre Tabs -->
-    <div class="category-tabs" id="genreTabs">
-      <button class="cat-tab active" data-genre="">Todos</button>
-    </div>
-
     <!-- Filters -->
     <div class="library-controls">
       <div class="search-box">
@@ -152,6 +147,9 @@
         <option value="Leído">Leído</option>
         <option value="En Pausa">En Pausa</option>
         <option value="Abandonado">Abandonado</option>
+      </select>
+      <select id="libGenreFilter" class="filter-select">
+        <option value="">Todos los géneros</option>
       </select>
       <select id="libSortBy" class="filter-select">
         <option value="dateAdded">Más recientes</option>

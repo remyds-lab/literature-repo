@@ -28,19 +28,15 @@ function getGenres(items) {
     .split(',').map(genre => genre.trim()).filter(Boolean)))].sort((a, b) => a.localeCompare(b));
 }
 
-function updateGenreTabs(items) {
-  const tabs = $('#genreTabs');
-  if (!tabs) return;
+function updateGenreFilter(items) {
+  const select = $('#libGenreFilter');
+  if (!select) return;
+  const selected = select.value;
   const genres = getGenres(currentGroup ? items.filter(item => itemGroup(item) === currentGroup) : items);
-  tabs.innerHTML = `<button class="cat-tab${currentGenre === '' ? ' active' : ''}" data-genre="">Todos</button>` +
-    genres.map(genre => `<button class="cat-tab${genre === currentGenre ? ' active' : ''}" data-genre="${genre.replace(/"/g, '&quot;')}">${genre}</button>`).join('');
-  tabs.querySelectorAll('.cat-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      currentGenre = tab.dataset.genre;
-      updateGenreTabs(items);
-      renderLibrary();
-    });
-  });
+  select.innerHTML = '<option value="">Todos los géneros</option>' + genres
+    .map(genre => `<option value="${genre.replace(/"/g, '&quot;')}">${genre}</option>`).join('');
+  select.value = genres.includes(selected) ? selected : '';
+  currentGenre = select.value;
 }
 
 export function setupLibrary() {
@@ -50,19 +46,22 @@ export function setupLibrary() {
       tab.classList.add('active');
       currentGroup = tab.dataset.group;
       currentGenre = '';
+      const genreFilter = $('#libGenreFilter');
+      if (genreFilter) genreFilter.value = '';
       renderLibrary();
     });
   });
 
   $('#libSearch')?.addEventListener('input', renderLibrary);
   $('#libStatusFilter')?.addEventListener('change', renderLibrary);
+  $('#libGenreFilter')?.addEventListener('change', renderLibrary);
   $('#libSortBy')?.addEventListener('change', renderLibrary);
   $('#manualAddBtn')?.addEventListener('click', () => openModal());
 }
 
 export function renderLibrary() {
   const items = getItems();
-  updateGenreTabs(items);
+  updateGenreFilter(items);
   const query = ($('#libSearch')?.value || '').toLowerCase();
   const statusFilter = $('#libStatusFilter')?.value || '';
   const sortBy = $('#libSortBy')?.value || 'dateAdded';
