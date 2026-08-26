@@ -38,12 +38,43 @@ function updateStatusOptions(group, selectedStatus = '') {
   select.value = statuses.includes(selectedStatus) ? selectedStatus : statuses[0];
 }
 
-function updateGenreSuggestions() {
-  const suggestions = $('#genreSuggestions');
-  if (!suggestions) return;
-  const genres = [...new Set(getItems().flatMap(item => (item.genre || '')
+function getGenres() {
+  return [...new Set(getItems().flatMap(item => (item.genre || '')
     .split(',').map(genre => genre.trim()).filter(Boolean)))].sort((a, b) => a.localeCompare(b));
-  suggestions.innerHTML = genres.map(genre => `<option value="${escapeHtml(genre)}"></option>`).join('');
+}
+
+function updateGenreSuggestions(selectedGenres = []) {
+  const picker = $('#genrePicker');
+  if (!picker) return;
+  const genres = [...new Set([...getGenres(), ...selectedGenres])].sort((a, b) => a.localeCompare(b));
+  picker.innerHTML = genres.map(genre => `<option value="${escapeHtml(genre)}">${escapeHtml(genre)}</option>`).join('');
+  picker.querySelectorAll('option').forEach(option => {
+    option.selected = selectedGenres.includes(option.value);
+  });
+}
+
+function syncGenres() {
+  const picker = $('#genrePicker');
+  const field = $('#fGenre');
+  if (!picker || !field) return;
+  field.value = [...picker.selectedOptions].map(option => option.value).join(', ');
+}
+
+function addGenre() {
+  const input = $('#fGenreNew');
+  const picker = $('#genrePicker');
+  if (!input || !picker) return;
+  const genre = input.value.trim();
+  if (!genre) return;
+  const existing = [...picker.options].find(option => option.value.toLowerCase() === genre.toLowerCase());
+  if (existing) {
+    existing.selected = true;
+  } else {
+    const option = new Option(genre, genre, true, true);
+    picker.add(option);
+  }
+  input.value = '';
+  syncGenres();
 }
 
 function renderCommentHistory(item) {
@@ -75,9 +106,16 @@ export function setupModal() {
   $('#itemForm')?.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' || e.isComposing) return;
     if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLButtonElement) return;
+    if (e.target.id === 'fGenreNew') {
+      e.preventDefault();
+      addGenre();
+      return;
+    }
     e.preventDefault();
     e.currentTarget.requestSubmit();
   });
+  $('#genrePicker')?.addEventListener('change', syncGenres);
+  $('#addGenreBtn')?.addEventListener('click', addGenre);
   $('#fGroup')?.addEventListener('change', () => {
     const group = $('#fGroup').value;
     updateCategoryOptions(group);
@@ -128,7 +166,9 @@ export function openModal(item = null, prefill = null) {
     $('#fGroup').value = groupForCategory(item.category);
     updateCategoryOptions($('#fGroup').value, item.category);
     updateStatusOptions($('#fGroup').value, item.status);
-    $('#fGenre').value = item.genre || '';
+    const selectedGenres = (item.genre || '').split(',').map(genre => genre.trim()).filter(Boolean);
+    updateGenreSuggestions(selectedGenres);
+    $('#fGenre').value = selectedGenres.join(', ');
     $('#fStatus').value = item.status || 'Planeo Leer';
     $('#fDescription').value = item.description || '';
     $('#fChapters').value = item.chapters ?? '';
@@ -151,7 +191,9 @@ export function openModal(item = null, prefill = null) {
     $('#fGroup').value = prefill.group || groupForCategory(prefill.category);
     updateCategoryOptions($('#fGroup').value, prefill.category);
     updateStatusOptions($('#fGroup').value, prefill.status);
-    $('#fGenre').value = prefill.genre || '';
+    const selectedGenres = (prefill.genre || '').split(',').map(genre => genre.trim()).filter(Boolean);
+    updateGenreSuggestions(selectedGenres);
+    $('#fGenre').value = selectedGenres.join(', ');
     $('#fDescription').value = prefill.description || '';
     $('#fChapters').value = prefill.chapters ?? '';
     $('#fCurrentChapter').value = prefill.currentChapter ?? '';
@@ -165,6 +207,8 @@ export function openModal(item = null, prefill = null) {
     $('#fGroup').value = 'visual';
     updateCategoryOptions('visual', 'Manga');
     updateStatusOptions('visual');
+    updateGenreSuggestions();
+    $('#fGenre').value = '';
     $('#fCurrentChapter').value = '';
     $('#fChapters').value = '';
     $('#deleteItemBtn').style.display = 'none';

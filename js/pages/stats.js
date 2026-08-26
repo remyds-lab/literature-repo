@@ -4,6 +4,7 @@ import { getItems } from '../store.js';
 export function renderStats() {
   renderCategoryChart();
   renderStatusChart();
+  renderPrioritySummary();
   renderTopRated();
   renderTimeline();
 }
@@ -38,6 +39,7 @@ function renderStatusChart() {
   const items = getItems();
   const counts = {};
   items.forEach(i => { counts[i.status] = (counts[i.status] || 0) + 1; });
+  const total = items.length || 1;
   const max = Math.max(...Object.values(counts), 1);
 
   const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
@@ -50,10 +52,36 @@ function renderStatusChart() {
     <div class="chart-bar-row">
       <span class="chart-bar-label">${status}</span>
       <div class="chart-bar-track">
-        <div class="chart-bar-fill" style="width: ${(count / max * 100)}%">${count}</div>
+        <div class="chart-bar-fill" style="width: ${(count / max * 100)}%">${count} (${Math.round(count / total * 100)}%)</div>
       </div>
     </div>
   `).join('');
+}
+
+function renderPrioritySummary() {
+  const container = $('#prioritySummary');
+  if (!container) return;
+  const items = getItems();
+  const planned = items.filter(item => item.status === 'Planeo Leer');
+  const groups = planned.reduce((counts, item) => {
+    const group = ['Manga', 'Manhua', 'Manhwa'].includes(item.category)
+      ? 'Visual'
+      : ['Serie', 'Película'].includes(item.category) ? 'Media' : 'Escrito';
+    counts[group] = (counts[group] || 0) + 1;
+    return counts;
+  }, {});
+  const withProgress = planned.filter(item => Number.isFinite(item.currentChapter) && Number.isFinite(item.chapters) && item.chapters > 0);
+  const averageProgress = withProgress.length
+    ? Math.round(withProgress.reduce((sum, item) => sum + Math.min(item.currentChapter, item.chapters) / item.chapters, 0) / withProgress.length * 100)
+    : 0;
+
+  container.innerHTML = `
+    <div class="priority-total"><strong>${planned.length}</strong><span>pendientes de lectura</span></div>
+    <div class="priority-groups">${Object.entries(groups).map(([group, count]) => `
+      <span class="priority-group"><b>${count}</b> ${group}</span>
+    `).join('') || '<span class="empty-state">No hay prioridades guardadas.</span>'}</div>
+    <div class="priority-progress">Progreso medio registrado: <strong>${averageProgress}%</strong></div>
+  `;
 }
 
 function renderTopRated() {

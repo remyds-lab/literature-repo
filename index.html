@@ -229,6 +229,12 @@
         <div class="chart-bars" id="chartStatus"></div>
       </div>
 
+      <!-- Reading Priority -->
+      <div class="dashboard-card">
+        <h3 class="card-title">Prioridad de lectura</h3>
+        <div class="priority-summary" id="prioritySummary"></div>
+      </div>
+
       <!-- Top Rated -->
       <div class="dashboard-card">
         <h3 class="card-title">Mejor Puntuados</h3>
@@ -295,8 +301,12 @@
         </div>
         <div class="form-group">
           <label for="fGenre">Género</label>
-          <input type="text" id="fGenre" list="genreSuggestions" placeholder="Elige o escribe: Acción, Fantasía" />
-          <datalist id="genreSuggestions"></datalist>
+          <select id="genrePicker" class="genre-picker" multiple size="4" aria-label="Seleccionar géneros existentes"></select>
+          <div class="genre-create-row">
+            <input type="text" id="fGenreNew" placeholder="Crear género nuevo" />
+            <button type="button" class="btn btn-outline btn-sm" id="addGenreBtn">Añadir</button>
+          </div>
+          <input type="hidden" id="fGenre" />
         </div>
         <div class="form-group">
           <label for="fDescription">Descripción</label>

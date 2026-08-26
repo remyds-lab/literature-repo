@@ -393,6 +393,17 @@ input, select, textarea { font-family: inherit; }
 }
 .item-card-genre { margin-top: 0.35rem; color: var(--accent); font-size: 0.74rem; font-weight: 700; }
 .item-card-stats { margin-top: 0.35rem; color: var(--text-muted); font-size: 0.74rem; }
+.genre-picker { width: 100%; min-height: 6.5rem; padding: 0.45rem; }
+.genre-picker option { padding: 0.25rem; }
+.genre-create-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.genre-create-row input { flex: 1; min-width: 0; }
+.priority-summary { display: grid; gap: 0.8rem; }
+.priority-total { display: flex; align-items: baseline; gap: 0.55rem; color: var(--text-secondary); }
+.priority-total strong { color: var(--accent); font-size: 2rem; line-height: 1; }
+.priority-total span, .priority-progress { font-size: 0.8rem; color: var(--text-muted); }
+.priority-groups { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.priority-group { padding: 0.35rem 0.55rem; border: 1px solid var(--border); border-radius: 6px; color: var(--text-secondary); font-size: 0.78rem; }
+.priority-group b { color: var(--accent); }
 .item-card-history { margin-top: 0.45rem; color: var(--accent); font-size: 0.72rem; font-weight: 700; }
 
 /* ─── Library Page ─── */
