@@ -8,6 +8,9 @@ module.exports = async function handler(req, res) {
   }
 
   const encodedQuery = encodeURIComponent(query);
+  const cacheKey = `${req.query?.mode || 'title'}:${query.toLowerCase()}`;
+  const cached = searchCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return res.status(200).json(cached.data);
   const requests = [
     fetchWithTimeout('https://api.mangaupdates.com/v1/series/search', {
       method: 'POST',
@@ -28,7 +31,7 @@ module.exports = async function handler(req, res) {
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`Kitsu API returned ${response.status}`))),
   ];
   if (req.query.mode === 'author') {
-    requests.push(fetchWithTimeout(`https://api.jikan.moe/v4/people?q=${encodedQuery}&limit=5`)
+    requests.push(fetchWithTimeout(`https://api.jikan.moe/v4/people?q=${encodedQuery}&limit=3`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`Jikan people API returned ${response.status}`)))
       .then(data => Promise.all((data.data || []).map(person =>
         fetchWithTimeout(`https://api.jikan.moe/v4/people/${person.mal_id}/full`)
@@ -122,12 +125,16 @@ module.exports = async function handler(req, res) {
     if (uniqueResults.length >= 75) break;
   }
 
-  res.status(200).json({ source: 'multiple-catalogs', results: uniqueResults });
+  const responseData = { source: 'multiple-catalogs', results: uniqueResults };
+  searchCache.set(cacheKey, { data: responseData, expiresAt: Date.now() + 5 * 60 * 1000 });
+  res.status(200).json(responseData);
 };
+
+const searchCache = new Map();
 
 async function fetchWithTimeout(url, options = {}) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
+  const timeout = setTimeout(() => controller.abort(), 5000);
   try {
     return await fetch(url, { ...options, signal: controller.signal });
   } finally {

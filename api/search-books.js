@@ -9,6 +9,9 @@ module.exports = async function handler(req, res) {
 
   const encodedQuery = encodeURIComponent(query);
   const mode = req.query?.mode === 'author' ? 'author' : 'title';
+  const cacheKey = `${mode}:${query.toLowerCase()}`;
+  const cached = searchCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return res.status(200).json(cached.data);
   const openLibraryQuery = mode === 'author' ? `author:${encodedQuery}` : `title:${encodedQuery}`;
   const googleQuery = mode === 'author' ? `inauthor:${encodedQuery}` : `intitle:${encodedQuery}`;
   const hathiPath = mode === 'author' ? 'author' : 'title';
@@ -139,12 +142,16 @@ module.exports = async function handler(req, res) {
     url: 'https://www.ellibrototal.com/ltotal/', type: 'external-source', year: '',
   });
 
-  return res.status(200).json({ source: 'multiple-catalogs', results: uniqueResults });
+  const responseData = { source: 'multiple-catalogs', results: uniqueResults };
+  searchCache.set(cacheKey, { data: responseData, expiresAt: Date.now() + 5 * 60 * 1000 });
+  return res.status(200).json(responseData);
 };
+
+const searchCache = new Map();
 
 async function fetchJson(url, options = {}) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
+  const timeout = setTimeout(() => controller.abort(), 5000);
   try {
     return await fetch(url, { ...options, signal: controller.signal });
   } finally {

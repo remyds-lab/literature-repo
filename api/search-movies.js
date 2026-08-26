@@ -12,6 +12,9 @@ module.exports = async function handler(req, res) {
   const omdbKey = process.env.OMDB_API_KEY;
   const mode = ['director', 'actor'].includes(req.query?.mode) ? req.query.mode : 'title';
   const encodedQuery = encodeURIComponent(query);
+  const cacheKey = `${mode}:${query.toLowerCase()}`;
+  const cached = searchCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return res.status(200).json(cached.data);
   const tmdbGenres = {
     28: 'Acción', 12: 'Aventura', 16: 'Animación', 35: 'Comedia', 80: 'Crimen',
     99: 'Documental', 18: 'Drama', 10751: 'Familia', 14: 'Fantasía', 36: 'Historia',
@@ -28,7 +31,7 @@ module.exports = async function handler(req, res) {
     if (mode !== 'title') {
       requests.push(fetchWithTimeout(`https://api.themoviedb.org/3/search/person?api_key=${encodeURIComponent(tmdbKey)}&language=es-ES&query=${encodeURIComponent(query)}`)
         .then(response => response.ok ? response.json() : Promise.reject(new Error(`TMDB people API returned ${response.status}`)))
-        .then(data => Promise.all((data.results || []).slice(0, 5).map(person =>
+        .then(data => Promise.all((data.results || []).slice(0, 3).map(person =>
           fetchWithTimeout(`https://api.themoviedb.org/3/person/${person.id}/combined_credits?api_key=${encodeURIComponent(tmdbKey)}&language=es-ES`)
             .then(response => response.ok ? response.json() : Promise.reject(new Error(`TMDB credits API returned ${response.status}`)))
             .then(credits => mode === 'actor'
@@ -63,7 +66,7 @@ module.exports = async function handler(req, res) {
   if (mode !== 'title') {
     requests.push(fetchWithTimeout(`https://api.tvmaze.com/search/people?q=${encodeURIComponent(query)}`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`TVMaze people API returned ${response.status}`)))
-      .then(people => Promise.all((people || []).slice(0, 5).map(person =>
+      .then(people => Promise.all((people || []).slice(0, 3).map(person =>
         fetchWithTimeout(`https://api.tvmaze.com/people/${person.person.id}?embed=${mode === 'actor' ? 'castcredits' : 'crewcredits'}`)
           .then(response => response.ok ? response.json() : Promise.reject(new Error(`TVMaze credits API returned ${response.status}`)))
           .then(personData => {
@@ -100,7 +103,11 @@ module.exports = async function handler(req, res) {
     if (!seenTitles.has(key)) { seenTitles.add(key); uniqueResults.push(result); }
     if (uniqueResults.length >= 80) break;
   }
-  if (uniqueResults.length > 0) return res.status(200).json({ source: 'multiple-catalogs', results: uniqueResults });
+  if (uniqueResults.length > 0) {
+    const responseData = { source: 'multiple-catalogs', results: uniqueResults };
+    searchCache.set(cacheKey, { data: responseData, expiresAt: Date.now() + 5 * 60 * 1000 });
+    return res.status(200).json(responseData);
+  }
 
   const imdbSearchUrl = `https://www.imdb.com/find/?q=${encodeURIComponent(query)}`;
   return res.status(200).json({
@@ -116,9 +123,11 @@ module.exports = async function handler(req, res) {
   });
 };
 
+const searchCache = new Map();
+
 async function fetchWithTimeout(url, options = {}) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
+  const timeout = setTimeout(() => controller.abort(), 5000);
   try {
     return await fetch(url, { ...options, signal: controller.signal });
   } finally {
