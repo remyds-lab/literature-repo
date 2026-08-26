@@ -17,18 +17,34 @@ module.exports = async function handler(req, res) {
     878: 'Ciencia ficción', 10770: 'Película de TV', 53: 'Suspenso', 10752: 'Bélica', 37: 'Western',
   };
 
+  const requests = [];
   if (tmdbKey) {
-    try {
-      const response = await fetch(
-        `https://api.themoviedb.org/3/search/multi?api_key=${encodeURIComponent(tmdbKey)}&language=es-ES&query=${encodeURIComponent(query)}`
-      );
-      if (!response.ok) throw new Error(`TMDB API returned ${response.status}`);
+    requests.push(Promise.all([1, 2].map(page =>
+      fetch(`https://api.themoviedb.org/3/search/multi?api_key=${encodeURIComponent(tmdbKey)}&language=es-ES&query=${encodeURIComponent(query)}&page=${page}`)
+        .then(response => response.ok ? response.json() : Promise.reject(new Error(`TMDB API returned ${response.status}`)))
+    )).then(pages => pages.flatMap(page => page.results || [])));
+  }
+  if (omdbKey) {
+    requests.push(fetch(`https://www.omdbapi.com/?apikey=${encodeURIComponent(omdbKey)}&s=${encodeURIComponent(query)}&type=&r=json`)
+      .then(response => response.ok ? response.json() : Promise.reject(new Error(`OMDB API returned ${response.status}`)))
+      .then(data => data.Response === 'False' ? [] : (data.Search || []).map(item => ({
+        title: item.Title || 'Sin título', description: `${item.Type || ''} · ${item.Year || ''}`.trim(),
+        image: item.Poster && item.Poster !== 'N/A' ? item.Poster : '', url: `https://www.imdb.com/title/${item.imdbID}`,
+        type: item.Type === 'series' ? 'Series' : 'Movie', year: item.Year || '',
+      }))));
+  }
+  requests.push(fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(query)}`)
+    .then(response => response.ok ? response.json() : Promise.reject(new Error(`TVMaze API returned ${response.status}`)))
+    .then(data => (data || []).slice(0, 40).map(item => ({
+      title: item.show?.name || 'Sin título', description: item.show?.summary?.replace(/<[^>]*>/g, '').slice(0, 200) || '',
+      genre: item.show?.genres?.join(', ') || '', chapters: null, image: item.show?.image?.original || item.show?.image?.medium || '',
+      url: item.show?.url || '', type: 'Series', year: item.show?.premiered?.slice(0, 4) || '',
+    }))));
 
-      const data = await response.json();
-      const results = (data.results || [])
-        .filter(item => item.media_type === 'movie' || item.media_type === 'tv')
-        .slice(0, 20)
-        .map(item => ({
+  const responses = await Promise.allSettled(requests);
+  const results = responses.filter(response => response.status === 'fulfilled').flatMap(response => response.value)
+    .filter(item => item.type === 'Movie' || item.type === 'Series' || item.media_type === 'movie' || item.media_type === 'tv')
+    .map(item => item.media_type ? ({
           title: item.title || item.name || 'Sin título',
           description: item.overview || '',
           genre: item.genre_ids?.map(id => tmdbGenres[id]).filter(Boolean).join(', ') || '',
@@ -37,59 +53,16 @@ module.exports = async function handler(req, res) {
           url: `https://www.themoviedb.org/${item.media_type}/${item.id}`,
           type: item.media_type === 'tv' ? 'Series' : 'Movie',
           year: (item.release_date || item.first_air_date || '').slice(0, 4),
-        }));
+        }) : item);
 
-      return res.status(200).json({ source: 'tmdb', results });
-    } catch (err) {
-      console.error('TMDB search error:', err);
-    }
+  const uniqueResults = [];
+  const seenTitles = new Set();
+  for (const result of results) {
+    const key = result.title.trim().toLowerCase();
+    if (!seenTitles.has(key)) { seenTitles.add(key); uniqueResults.push(result); }
+    if (uniqueResults.length >= 80) break;
   }
-
-  if (omdbKey) try {
-    const response = await fetch(
-      `https://www.omdbapi.com/?apikey=${encodeURIComponent(omdbKey)}&s=${encodeURIComponent(query)}&type=&r=json`
-    );
-
-    if (!response.ok) {
-      throw new Error(`OMDB API returned ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    const results = data.Response === 'False' ? [] : (data.Search || []).map(item => ({
-      title: item.Title || 'Sin título',
-      description: `${item.Type || ''} · ${item.Year || ''}`.trim(),
-      image: item.Poster && item.Poster !== 'N/A' ? item.Poster : '',
-      url: `https://www.imdb.com/title/${item.imdbID}`,
-      type: item.Type === 'series' ? 'Series' : 'Movie',
-      year: item.Year || '',
-    }));
-
-      if (results.length > 0) return res.status(200).json({ source: 'omdb', results });
-  } catch (err) {
-    console.error('OMDB search error:', err);
-  }
-
-  try {
-    const response = await fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(query)}`);
-    if (!response.ok) throw new Error(`TVmaze API returned ${response.status}`);
-
-    const data = await response.json();
-    const results = (data || []).slice(0, 20).map(item => ({
-      title: item.show?.name || 'Sin título',
-      description: item.show?.summary?.replace(/<[^>]*>/g, '').slice(0, 200) || '',
-      genre: item.show?.genres?.join(', ') || '',
-      chapters: null,
-      image: item.show?.image?.original || item.show?.image?.medium || '',
-      url: item.show?.url || '',
-      type: 'Series',
-      year: item.show?.premiered?.slice(0, 4) || '',
-    }));
-
-    if (results.length > 0) return res.status(200).json({ source: 'tvmaze', results });
-  } catch (tvmazeError) {
-    console.error('TVmaze search error:', tvmazeError);
-  }
+  if (uniqueResults.length > 0) return res.status(200).json({ source: 'multiple-catalogs', results: uniqueResults });
 
   const imdbSearchUrl = `https://www.imdb.com/find/?q=${encodeURIComponent(query)}`;
   return res.status(200).json({
