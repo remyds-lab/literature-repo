@@ -80,7 +80,11 @@ function renderTimeline() {
   const container = $('#timeline');
   if (!container) return;
   const items = getItems();
-  const recent = [...items].sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded)).slice(0, 10);
+  const recent = [...items].sort((a, b) => {
+    const dateA = a.dateUpdated || a.dateAdded;
+    const dateB = b.dateUpdated || b.dateAdded;
+    return new Date(dateB) - new Date(dateA);
+  }).slice(0, 10);
 
   if (recent.length === 0) {
     container.innerHTML = '<p class="empty-state">No hay actividad reciente.</p>';
@@ -92,7 +96,7 @@ function renderTimeline() {
       <span class="timeline-dot"></span>
       <div class="timeline-info">
         <span class="timeline-title">${escapeHtml(i.title)} — ${i.category}</span>
-        <span class="timeline-date">${formatDate(i.dateAdded)}</span>
+        <span class="timeline-date">${formatDate(i.dateUpdated || i.dateAdded)}</span>
       </div>
     </div>
   `).join('');

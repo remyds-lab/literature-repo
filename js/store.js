@@ -2,6 +2,18 @@ const STORAGE_KEY = 'mediaVault_items';
 
 export let items = [];
 
+function normalizeItem(item) {
+  const comments = Array.isArray(item.comments) ? item.comments : [];
+  if (comments.length === 0 && item.comment) {
+    comments.push({
+      id: `${item.id}-legacy`,
+      text: item.comment,
+      createdAt: item.dateUpdated || item.dateAdded || new Date().toISOString(),
+    });
+  }
+  return { ...item, comments };
+}
+
 export function getItems() {
   return items;
 }
@@ -10,7 +22,7 @@ export function loadItems() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     const parsed = raw ? JSON.parse(raw) : [];
-    items = Array.isArray(parsed) ? parsed : [];
+    items = Array.isArray(parsed) ? parsed.map(normalizeItem) : [];
   } catch (err) {
     console.warn('Could not load local data, starting with an empty library.');
     items = [];
@@ -61,7 +73,7 @@ export async function loadFromBackend() {
     if (res.ok) {
       const remote = await res.json();
       if (Array.isArray(remote) && remote.length >= items.length) {
-        items = remote;
+        items = remote.map(normalizeItem);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
       }
     }

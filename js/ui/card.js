@@ -27,6 +27,7 @@ export function renderItemCard(item) {
         </div>
         ${item.rating ? `<div class="item-card-rating">★ ${item.rating}/10</div>` : ''}
         ${item.comment ? `<div class="item-card-comment">${escapeHtml(item.comment)}</div>` : ''}
+        ${item.comments?.length > 1 ? `<div class="item-card-history">${item.comments.length} comentarios registrados</div>` : ''}
       </div>
     </div>
   `;

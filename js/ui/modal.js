@@ -1,10 +1,29 @@
-import { $, $$ } from '../utils.js';
+import { $, $$, escapeHtml, formatDate } from '../utils.js';
 import { getItems, updateItem, addItem, deleteItem } from '../store.js';
 import { toast } from './toast.js';
 import { refreshCurrentPage } from '../router.js';
 
 let editId = null;
 let currentRating = 0;
+
+function renderCommentHistory(item) {
+  const history = $('#commentHistory');
+  const list = $('#commentHistoryList');
+  const count = $('#commentHistoryCount');
+  if (!history || !list || !count) return;
+
+  const comments = [...(item?.comments || [])].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
+  history.hidden = comments.length === 0;
+  count.textContent = comments.length ? `${comments.length}` : '';
+  list.innerHTML = comments.map(comment => `
+    <article class="comment-history-entry">
+      <time datetime="${escapeHtml(comment.createdAt)}">${formatDate(comment.createdAt)}</time>
+      <p>${escapeHtml(comment.text)}</p>
+    </article>
+  `).join('');
+}
 
 export function setupModal() {
   $('#modalClose')?.addEventListener('click', closeModal);
@@ -56,7 +75,7 @@ export function openModal(item = null, prefill = null) {
     $('#fTitle').value = item.title || '';
     $('#fCategory').value = item.category || 'Manga';
     $('#fStatus').value = item.status || 'Planeo Leer';
-    $('#fComment').value = item.comment || '';
+    renderCommentHistory(item);
     $('#fSourceUrl').value = item.sourceUrl || '';
     $('#fImageUrl').value = item.imageUrl || '';
     if (item.rating) {
@@ -74,11 +93,13 @@ export function openModal(item = null, prefill = null) {
     $('#fCategory').value = prefill.category || 'Manga';
     $('#fSourceUrl').value = prefill.sourceUrl || '';
     $('#fImageUrl').value = prefill.imageUrl || '';
+    renderCommentHistory(null);
     $('#deleteItemBtn').style.display = 'none';
   } else {
     // New manual add
     $('#modalTitle').textContent = 'Nuevo Ítem';
     $('#deleteItemBtn').style.display = 'none';
+    renderCommentHistory(null);
   }
 
   $('#itemModal').classList.remove('hidden');
@@ -95,20 +116,32 @@ function handleSave(e) {
   const titleVal = $('#fTitle').value.trim();
   if (!titleVal) return;
 
+  const existing = editId ? getItems().find(i => i.id === editId) : null;
+  const comment = $('#fComment').value.trim();
+  const comments = [...(existing?.comments || [])];
+  if (comment) {
+    comments.push({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      text: comment,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
   const newItem = {
+    ...(existing || {}),
     id: editId || Date.now().toString(),
     title: titleVal,
     category: $('#fCategory').value,
     status: $('#fStatus').value,
     rating: currentRating || null,
-    comment: $('#fComment').value.trim(),
+    comment: comment || existing?.comment || '',
+    comments,
     sourceUrl: $('#fSourceUrl').value.trim(),
     imageUrl: $('#fImageUrl').value.trim(),
     dateUpdated: new Date().toISOString(),
   };
 
   if (editId) {
-    const existing = getItems().find(i => i.id === editId);
     newItem.dateAdded = existing?.dateAdded || new Date().toISOString();
     updateItem(editId, newItem);
     toast('Ítem actualizado', 'success');
