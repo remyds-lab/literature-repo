@@ -74,14 +74,6 @@
           <div class="floating-card fc-4">📕 Novelas</div>
           <div class="floating-card fc-5">🎌 Manhwa</div>
         </div>
-          <div class="form-group">
-            <label for="fGroup">Grupo</label>
-            <select id="fGroup" required>
-              <option value="visual">Visual</option>
-              <option value="written">Escrito</option>
-              <option value="media">Media</option>
-            </select>
-          </div>
       </div>
     </div>
 
@@ -260,6 +252,14 @@
         </div>
         <div class="form-row">
           <div class="form-group">
+            <label for="fGroup">Grupo</label>
+            <select id="fGroup" required>
+              <option value="visual">Visual</option>
+              <option value="written">Escrito</option>
+              <option value="media">Media</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label for="fCategory">Categoría</label>
             <select id="fCategory" required>
               <option value="Manga">Manga</option>
@@ -286,6 +286,16 @@
               <option value="En Pausa">En Pausa</option>
               <option value="Abandonado">Abandonado</option>
             </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fChapters">Capítulos</label>
+            <input type="number" id="fChapters" min="0" step="1" placeholder="Ej.: 120" />
+          </div>
+          <div class="form-group">
+            <label for="fPages">Páginas</label>
+            <input type="number" id="fPages" min="0" step="1" placeholder="Ej.: 320" />
           </div>
         </div>
         <div class="form-group">
