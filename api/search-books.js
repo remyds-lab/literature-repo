@@ -21,9 +21,13 @@ module.exports = async function handler(req, res) {
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`HathiTrust API returned ${response.status}`))),
     fetch(`https://archive.org/advancedsearch.php?q=${mode === 'author' ? `creator:%22${encodedQuery}%22` : `title:%22${encodedQuery}%22`}&fl[]=identifier,title,description,creator,year&rows=40&output=json`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`Internet Archive API returned ${response.status}`))),
+    fetch(`https://gutendex.com/books/?search=${encodedQuery}&page=1`)
+      .then(response => response.ok ? response.json() : Promise.reject(new Error(`Gutendex API returned ${response.status}`))),
+    fetch(`https://librivox.org/api/feed/audiobooks?${mode === 'author' ? 'author' : 'title'}=${encodedQuery}&format=json&limit=40`)
+      .then(response => response.ok ? response.json() : Promise.reject(new Error(`LibriVox API returned ${response.status}`))),
   ];
 
-  const [openLibrary, googleBooks, hathiTrust, internetArchive] = await Promise.allSettled(requests);
+  const [openLibrary, googleBooks, hathiTrust, internetArchive, gutendex, librivox] = await Promise.allSettled(requests);
   const results = [];
 
   if (openLibrary.status === 'fulfilled') {
@@ -82,6 +86,27 @@ module.exports = async function handler(req, res) {
     })));
   }
 
+  if (gutendex.status === 'fulfilled') {
+    results.push(...(gutendex.value.results || []).map(book => ({
+      title: book.title || 'Sin título',
+      description: book.authors?.map(author => author.name).join(', ') || 'Libro disponible en Project Gutenberg',
+      genre: '', chapters: null,
+      image: book.formats?.['image/jpeg'] || '',
+      url: book.formats?.['text/html'] || `https://www.gutenberg.org/ebooks/${book.id}`,
+      type: 'Book', year: book.copyright || '',
+    })));
+  }
+
+  if (librivox.status === 'fulfilled') {
+    results.push(...(librivox.value.books || []).map(book => ({
+      title: book.title || 'Sin título',
+      description: book.author || 'Audiolibro disponible en LibriVox',
+      genre: '', chapters: null, image: book.coverart || '',
+      url: book.url_librivox || `https://librivox.org/search?title=${encodedQuery}`,
+      type: 'Book', year: book.copyright_year || '',
+    })));
+  }
+
   const uniqueResults = [];
   const seenTitles = new Set();
   for (const result of results) {
@@ -92,6 +117,13 @@ module.exports = async function handler(req, res) {
     }
     if (uniqueResults.length >= 60) break;
   }
+
+  uniqueResults.push({
+    title: `Buscar "${query}" en El Libro Total`,
+    description: mode === 'author' ? 'Consulta autores y obras en El Libro Total.' : 'Consulta libros y audiolibros en El Libro Total.',
+    genre: '', chapters: null, image: '',
+    url: 'https://www.ellibrototal.com/ltotal/', type: 'external-source', year: '',
+  });
 
   if (uniqueResults.length === 0) {
     uniqueResults.push({
