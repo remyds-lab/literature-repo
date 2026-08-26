@@ -3,14 +3,15 @@
 // TMDB_API_KEY is recommended. OMDB_API_KEY remains a fallback.
 
 module.exports = async function handler(req, res) {
-  const query = req.query.q;
+  const query = String(req.query?.q || '').trim();
   if (!query) {
     return res.status(400).json({ error: 'Missing query parameter "q"' });
   }
 
   const tmdbKey = process.env.TMDB_API_KEY;
   const omdbKey = process.env.OMDB_API_KEY;
-  const mode = ['director', 'actor'].includes(req.query.mode) ? req.query.mode : 'title';
+  const mode = ['director', 'actor'].includes(req.query?.mode) ? req.query.mode : 'title';
+  const encodedQuery = encodeURIComponent(query);
   const tmdbGenres = {
     28: 'Acción', 12: 'Aventura', 16: 'Animación', 35: 'Comedia', 80: 'Crimen',
     99: 'Documental', 18: 'Drama', 10751: 'Familia', 14: 'Fantasía', 36: 'Historia',
@@ -30,10 +31,9 @@ module.exports = async function handler(req, res) {
         .then(data => Promise.all((data.results || []).slice(0, 5).map(person =>
           fetch(`https://api.themoviedb.org/3/person/${person.id}/combined_credits?api_key=${encodeURIComponent(tmdbKey)}&language=es-ES`)
             .then(response => response.ok ? response.json() : Promise.reject(new Error(`TMDB credits API returned ${response.status}`)))
-            .then(credits => (credits.cast || []).concat(credits.crew || []).filter(credit =>
-              (mode === 'actor' && credits.cast?.includes(credit)) ||
-              (mode === 'director' && credit.job === 'Director')
-            ))
+            .then(credits => mode === 'actor'
+              ? (credits.cast || [])
+              : (credits.crew || []).filter(credit => credit.job === 'Director'))
         )).then(credits => credits.flat())));
     }
   }
@@ -95,7 +95,8 @@ module.exports = async function handler(req, res) {
   const uniqueResults = [];
   const seenTitles = new Set();
   for (const result of results) {
-    const key = result.title.trim().toLowerCase();
+    const key = String(result.title || '').trim().toLowerCase();
+    if (!key) continue;
     if (!seenTitles.has(key)) { seenTitles.add(key); uniqueResults.push(result); }
     if (uniqueResults.length >= 80) break;
   }
