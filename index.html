@@ -288,6 +288,14 @@
             <select id="fStatus" required>
             </select>
           </div>
+          <div class="form-group" id="priorityField">
+            <label for="fPriority">Prioridad</label>
+            <select id="fPriority">
+              <option value="high">Alta</option>
+              <option value="medium" selected>Media</option>
+              <option value="low">Baja</option>
+            </select>
+          </div>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -301,7 +309,11 @@
         </div>
         <div class="form-group">
           <label for="fGenre">Género</label>
-          <select id="genrePicker" class="genre-picker" multiple size="4" aria-label="Seleccionar géneros existentes"></select>
+          <details class="genre-dropdown">
+            <summary id="genreSummary">Seleccionar géneros</summary>
+            <select id="genrePicker" class="genre-picker" multiple size="4" aria-label="Seleccionar géneros existentes"></select>
+          </details>
+          <div class="selected-genres" id="selectedGenres" aria-live="polite"></div>
           <div class="genre-create-row">
             <input type="text" id="fGenreNew" placeholder="Crear género nuevo" />
             <button type="button" class="btn btn-outline btn-sm" id="addGenreBtn">Añadir</button>

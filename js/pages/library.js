@@ -123,5 +123,6 @@ export function renderLibrary() {
 }
 
 function priorityOf(item) {
-  return item.status === 'Planeo Leer' ? 1 : 0;
+  if (!['Planeo Leer', 'Planeo Ver'].includes(item.status)) return 0;
+  return { high: 3, medium: 2, low: 1 }[item.priority] || 2;
 }

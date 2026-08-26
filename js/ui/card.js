@@ -24,6 +24,7 @@ export function renderItemCard(item) {
         <div class="item-card-meta">
           <span class="badge badge-cat">${item.category}</span>
           <span class="badge badge-status" data-status="${item.status}">${item.status}</span>
+          ${['Planeo Leer', 'Planeo Ver'].includes(item.status) ? `<span class="badge badge-priority priority-${item.priority || 'medium'}">${item.priority === 'high' ? 'Alta' : item.priority === 'low' ? 'Baja' : 'Media'}</span>` : ''}
         </div>
         ${item.genre ? `<div class="item-card-genre">${escapeHtml(item.genre)}</div>` : ''}
         ${item.chapters != null ? `<div class="item-card-stats">${item.currentChapter ?? 0} / ${item.chapters} capítulos</div>` : ''}

@@ -62,7 +62,12 @@ function renderPrioritySummary() {
   const container = $('#prioritySummary');
   if (!container) return;
   const items = getItems();
-  const planned = items.filter(item => item.status === 'Planeo Leer');
+  const planned = items.filter(item => ['Planeo Leer', 'Planeo Ver'].includes(item.status));
+  const priorities = planned.reduce((counts, item) => {
+    const priority = item.priority || 'medium';
+    counts[priority] = (counts[priority] || 0) + 1;
+    return counts;
+  }, {});
   const groups = planned.reduce((counts, item) => {
     const group = ['Manga', 'Manhua', 'Manhwa'].includes(item.category)
       ? 'Visual'
@@ -76,10 +81,15 @@ function renderPrioritySummary() {
     : 0;
 
   container.innerHTML = `
-    <div class="priority-total"><strong>${planned.length}</strong><span>pendientes de lectura</span></div>
+    <div class="priority-total"><strong>${planned.length}</strong><span>pendientes por leer o ver</span></div>
     <div class="priority-groups">${Object.entries(groups).map(([group, count]) => `
       <span class="priority-group"><b>${count}</b> ${group}</span>
     `).join('') || '<span class="empty-state">No hay prioridades guardadas.</span>'}</div>
+    <div class="priority-levels">
+      <span class="priority-level high"><b>${priorities.high || 0}</b> Alta</span>
+      <span class="priority-level medium"><b>${priorities.medium || 0}</b> Media</span>
+      <span class="priority-level low"><b>${priorities.low || 0}</b> Baja</span>
+    </div>
     <div class="priority-progress">Progreso medio registrado: <strong>${averageProgress}%</strong></div>
   `;
 }

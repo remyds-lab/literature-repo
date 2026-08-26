@@ -58,6 +58,15 @@ function syncGenres() {
   const field = $('#fGenre');
   if (!picker || !field) return;
   field.value = [...picker.selectedOptions].map(option => option.value).join(', ');
+  const selected = $('#selectedGenres');
+  const values = [...picker.selectedOptions].map(option => option.value);
+  if (selected) {
+    selected.innerHTML = values.length
+      ? values.map(value => `<span class="selected-genre">${escapeHtml(value)}</span>`).join('')
+      : '<span class="selected-genres-empty">Ningún género seleccionado</span>';
+  }
+  const summary = $('#genreSummary');
+  if (summary) summary.textContent = values.length ? `${values.length} géneros seleccionados` : 'Seleccionar géneros';
 }
 
 function addGenre() {
@@ -75,6 +84,12 @@ function addGenre() {
   }
   input.value = '';
   syncGenres();
+}
+
+function updatePriorityVisibility() {
+  const field = $('#priorityField');
+  const status = $('#fStatus');
+  if (field && status) field.hidden = !['Planeo Leer', 'Planeo Ver'].includes(status.value);
 }
 
 function renderCommentHistory(item) {
@@ -121,6 +136,7 @@ export function setupModal() {
     updateCategoryOptions(group);
     updateStatusOptions(group, $('#fStatus').value);
   });
+  $('#fStatus')?.addEventListener('change', updatePriorityVisibility);
   $('#deleteItemBtn')?.addEventListener('click', handleDelete);
 
   // Star rating interaction
@@ -169,6 +185,7 @@ export function openModal(item = null, prefill = null) {
     const selectedGenres = (item.genre || '').split(',').map(genre => genre.trim()).filter(Boolean);
     updateGenreSuggestions(selectedGenres);
     $('#fGenre').value = selectedGenres.join(', ');
+    $('#fPriority').value = item.priority || 'medium';
     $('#fStatus').value = item.status || 'Planeo Leer';
     $('#fDescription').value = item.description || '';
     $('#fChapters').value = item.chapters ?? '';
@@ -194,6 +211,7 @@ export function openModal(item = null, prefill = null) {
     const selectedGenres = (prefill.genre || '').split(',').map(genre => genre.trim()).filter(Boolean);
     updateGenreSuggestions(selectedGenres);
     $('#fGenre').value = selectedGenres.join(', ');
+    $('#fPriority').value = prefill.priority || 'medium';
     $('#fDescription').value = prefill.description || '';
     $('#fChapters').value = prefill.chapters ?? '';
     $('#fCurrentChapter').value = prefill.currentChapter ?? '';
@@ -209,11 +227,15 @@ export function openModal(item = null, prefill = null) {
     updateStatusOptions('visual');
     updateGenreSuggestions();
     $('#fGenre').value = '';
+    $('#fPriority').value = 'medium';
     $('#fCurrentChapter').value = '';
     $('#fChapters').value = '';
     $('#deleteItemBtn').style.display = 'none';
     renderCommentHistory(null);
   }
+
+  syncGenres();
+  updatePriorityVisibility();
 
   $('#itemModal').classList.remove('hidden');
 }
@@ -249,6 +271,7 @@ function handleSave(e) {
     chapters: $('#fChapters').value === '' ? null : Number($('#fChapters').value),
     genre: $('#fGenre').value.trim(),
     status: $('#fStatus').value,
+    priority: $('#fPriority').value,
     description: $('#fDescription').value.trim(),
     rating: currentRating || null,
     comment: comment || existing?.comment || '',

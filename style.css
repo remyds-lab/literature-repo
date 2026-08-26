@@ -381,6 +381,9 @@ input, select, textarea { font-family: inherit; }
 .badge-status[data-status="Planeo Ver"] { background: rgba(245,158,11,0.15); color: #f59e0b; }
 .badge-status[data-status="Abandonado"] { background: rgba(239,68,68,0.15); color: #ef4444; }
 .badge-status[data-status="En Pausa"] { background: rgba(156,163,175,0.15); color: #9ca3af; }
+.badge-priority.priority-high { background: rgba(239,68,68,0.15); color: #ef4444; }
+.badge-priority.priority-medium { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.badge-priority.priority-low { background: rgba(59,130,246,0.15); color: #3b82f6; }
 .item-card-rating { color: var(--accent); font-size: 0.85rem; font-weight: 700; }
 .item-card-comment {
   font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem;
@@ -395,6 +398,13 @@ input, select, textarea { font-family: inherit; }
 .item-card-stats { margin-top: 0.35rem; color: var(--text-muted); font-size: 0.74rem; }
 .genre-picker { width: 100%; min-height: 6.5rem; padding: 0.45rem; }
 .genre-picker option { padding: 0.25rem; }
+.genre-dropdown { border: 1px solid var(--border); border-radius: 0.6rem; background: var(--bg-input); }
+.genre-dropdown summary { cursor: pointer; padding: 0.65rem 0.8rem; color: var(--text-secondary); }
+.genre-dropdown[open] summary { border-bottom: 1px solid var(--border); color: var(--text-primary); }
+.selected-genres { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; min-height: 1.4rem; }
+.selected-genre, .selected-genres-empty { padding: 0.25rem 0.5rem; border-radius: 999px; font-size: 0.72rem; }
+.selected-genre { background: var(--accent-subtle); color: var(--accent); font-weight: 700; }
+.selected-genres-empty { color: var(--text-muted); }
 .genre-create-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
 .genre-create-row input { flex: 1; min-width: 0; }
 .priority-summary { display: grid; gap: 0.8rem; }
@@ -404,6 +414,11 @@ input, select, textarea { font-family: inherit; }
 .priority-groups { display: flex; flex-wrap: wrap; gap: 0.45rem; }
 .priority-group { padding: 0.35rem 0.55rem; border: 1px solid var(--border); border-radius: 6px; color: var(--text-secondary); font-size: 0.78rem; }
 .priority-group b { color: var(--accent); }
+.priority-levels { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.priority-level { padding: 0.35rem 0.55rem; border-radius: 6px; font-size: 0.78rem; }
+.priority-level.high { background: rgba(239,68,68,0.12); color: #ef4444; }
+.priority-level.medium { background: rgba(245,158,11,0.12); color: #f59e0b; }
+.priority-level.low { background: rgba(59,130,246,0.12); color: #3b82f6; }
 .item-card-history { margin-top: 0.45rem; color: var(--accent); font-size: 0.72rem; font-weight: 700; }
 
 /* ─── Library Page ─── */
