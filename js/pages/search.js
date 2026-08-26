@@ -83,7 +83,9 @@ function renderSearchResults(data) {
     <div class="search-results-grid">
       ${data.results.map((r, i) => `
         <div class="result-card" data-index="${i}">
-          ${r.image ? `<img class="result-card-img" src="${r.image}" alt="${escapeHtml(r.title)}" loading="lazy" onerror="this.style.display='none'">` : ''}
+          <div class="result-card-media">
+            ${r.image ? `<img class="result-card-img" src="${r.image}" alt="${escapeHtml(r.title)}" loading="lazy" onerror="this.outerHTML='<div class=\'result-card-img-placeholder\'>${getResultEmoji(r.type)}</div>'">` : `<div class="result-card-img-placeholder">${getResultEmoji(r.type)}</div>`}
+          </div>
           <div class="result-card-info">
             <div class="result-card-title">${escapeHtml(r.title)}</div>
             <div class="result-card-desc">${escapeHtml(r.description || r.year || '')}</div>
@@ -105,6 +107,13 @@ function renderSearchResults(data) {
       addFromSearchResult(result);
     });
   });
+}
+
+function getResultEmoji(type) {
+  if (type === 'Movie') return '\u{1F3AC}';
+  if (type === 'Series') return '\u{1F4FA}';
+  if (type === 'Manga') return '\u{1F4D6}';
+  return '\u{1F4DA}';
 }
 
 function addFromSearchResult(result) {
