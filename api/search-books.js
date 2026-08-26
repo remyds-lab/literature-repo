@@ -12,6 +12,7 @@ module.exports = async function handler(req, res) {
   const openLibraryQuery = mode === 'author' ? `author:${encodedQuery}` : `title:${encodedQuery}`;
   const googleQuery = mode === 'author' ? `inauthor:${encodedQuery}` : `intitle:${encodedQuery}`;
   const hathiPath = mode === 'author' ? 'author' : 'title';
+  const gutendexQuery = mode === 'author' ? `author:${encodedQuery}` : encodedQuery;
   const requests = [
     fetchJson(`https://openlibrary.org/search.json?q=${openLibraryQuery}&limit=40&fields=title,author_name,first_publish_year,cover_i,key,subject`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`Open Library API returned ${response.status}`))),
@@ -21,7 +22,7 @@ module.exports = async function handler(req, res) {
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`HathiTrust API returned ${response.status}`))),
     fetchJson(`https://archive.org/advancedsearch.php?q=${mode === 'author' ? `creator:%22${encodedQuery}%22` : `title:%22${encodedQuery}%22`}&fl[]=identifier,title,description,creator,year&rows=40&output=json`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`Internet Archive API returned ${response.status}`))),
-    fetchJson(`https://gutendex.com/books/?search=${encodedQuery}&page=1`)
+    fetchJson(`https://gutendex.com/books/?search=${gutendexQuery}&page=1`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`Gutendex API returned ${response.status}`))),
     fetchJson(`https://librivox.org/api/feed/audiobooks?${mode === 'author' ? 'author' : 'title'}=${encodedQuery}&format=json&limit=40`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`LibriVox API returned ${response.status}`))),
@@ -34,7 +35,7 @@ module.exports = async function handler(req, res) {
     results.push(...(openLibrary.value.docs || []).map(book => ({
       title: book.title || 'Sin título',
       description: book.author_name?.join(', ') || 'Libro disponible en Open Library',
-      genre: book.subject?.slice(0, 5).join(', ') || '',
+      genre: Array.isArray(book.subject) ? book.subject.slice(0, 5).join(', ') : '',
       chapters: null,
       image: book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg` : '',
       url: book.key ? `https://openlibrary.org${book.key}` : `https://openlibrary.org/search?title=${encodedQuery}`,
@@ -49,7 +50,7 @@ module.exports = async function handler(req, res) {
       return {
         title: info.title || 'Sin título',
         description: info.description ? info.description.replace(/<[^>]*>/g, '').slice(0, 200) : '',
-        genre: info.categories?.join(', ') || '',
+        genre: Array.isArray(info.categories) ? info.categories.join(', ') : '',
         chapters: null,
         image: info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '',
         url: info.infoLink || `https://books.google.com/books?id=${item.id}`,
@@ -65,7 +66,7 @@ module.exports = async function handler(req, res) {
         const title = (record.titles || ['Sin título'])[0];
         results.push({
           title,
-          description: `${(record.isbns || []).join(', ')} ${(record.publishDates || []).join(', ')}`.trim() || 'Libro disponible en HathiTrust',
+          description: `${Array.isArray(record.isbns) ? record.isbns.join(', ') : ''} ${Array.isArray(record.publishDates) ? record.publishDates.join(', ') : ''}`.trim() || 'Libro disponible en HathiTrust',
           genre: '',
           chapters: null,
           image: '',
@@ -80,7 +81,7 @@ module.exports = async function handler(req, res) {
   if (internetArchive.status === 'fulfilled') {
     results.push(...(internetArchive.value.response?.docs || []).map(book => ({
       title: book.title || 'Sin título',
-      description: Array.isArray(book.description) ? book.description[0] : book.description || book.creator || 'Libro disponible en Internet Archive',
+      description: Array.isArray(book.description) ? book.description[0] : (typeof book.description === 'string' ? book.description : book.creator || 'Libro disponible en Internet Archive'),
       genre: '', chapters: null, image: '',
       url: `https://archive.org/details/${book.identifier}`, type: 'Book', year: book.year || '',
     })));
@@ -89,7 +90,7 @@ module.exports = async function handler(req, res) {
   if (gutendex.status === 'fulfilled') {
     results.push(...(gutendex.value.results || []).map(book => ({
       title: book.title || 'Sin título',
-      description: book.authors?.map(author => author.name).join(', ') || 'Libro disponible en Project Gutenberg',
+      description: Array.isArray(book.authors) ? book.authors.map(author => author.name).join(', ') : 'Libro disponible en Project Gutenberg',
       genre: '', chapters: null,
       image: book.formats?.['image/jpeg'] || '',
       url: book.formats?.['text/html'] || `https://www.gutenberg.org/ebooks/${book.id}`,
@@ -100,7 +101,7 @@ module.exports = async function handler(req, res) {
   if (librivox.status === 'fulfilled') {
     results.push(...(librivox.value.books || []).map(book => ({
       title: book.title || 'Sin título',
-      description: book.author || 'Audiolibro disponible en LibriVox',
+      description: typeof book.author === 'string' ? book.author : 'Audiolibro disponible en LibriVox',
       genre: '', chapters: null, image: book.coverart || '',
       url: book.url_librivox || `https://librivox.org/search?title=${encodedQuery}`,
       type: 'Book', year: book.copyright_year || '',
@@ -110,20 +111,15 @@ module.exports = async function handler(req, res) {
   const uniqueResults = [];
   const seenTitles = new Set();
   for (const result of results) {
-    const key = result.title.trim().toLowerCase();
+    const title = typeof result.title === 'string' ? result.title.trim() : '';
+    if (!title) continue;
+    const key = title.toLowerCase();
     if (!seenTitles.has(key)) {
       seenTitles.add(key);
-      uniqueResults.push(result);
+      uniqueResults.push({ ...result, title });
     }
     if (uniqueResults.length >= 60) break;
   }
-
-  uniqueResults.push({
-    title: `Buscar "${query}" en El Libro Total`,
-    description: mode === 'author' ? 'Consulta autores y obras en El Libro Total.' : 'Consulta libros y audiolibros en El Libro Total.',
-    genre: '', chapters: null, image: '',
-    url: 'https://www.ellibrototal.com/ltotal/', type: 'external-source', year: '',
-  });
 
   if (uniqueResults.length === 0) {
     uniqueResults.push({
@@ -135,6 +131,13 @@ module.exports = async function handler(req, res) {
       year: '',
     });
   }
+
+  uniqueResults.push({
+    title: `Buscar "${query}" en El Libro Total`,
+    description: mode === 'author' ? 'Consulta autores y obras en El Libro Total.' : 'Consulta libros y audiolibros en El Libro Total.',
+    genre: '', chapters: null, image: '',
+    url: 'https://www.ellibrototal.com/ltotal/', type: 'external-source', year: '',
+  });
 
   return res.status(200).json({ source: 'multiple-catalogs', results: uniqueResults });
 };
