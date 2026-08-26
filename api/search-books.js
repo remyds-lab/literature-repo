@@ -29,9 +29,13 @@ module.exports = async function handler(req, res) {
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`Gutendex API returned ${response.status}`))),
     fetchJson(`https://librivox.org/api/feed/audiobooks?${mode === 'author' ? 'author' : 'title'}=${encodedQuery}&format=json&limit=40`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`LibriVox API returned ${response.status}`))),
+    fetchJson(`https://api.openalex.org/works?${mode === 'author' ? 'search' : 'title.search'}=${encodedQuery}&filter=type:book&per-page=40`)
+      .then(response => response.ok ? response.json() : Promise.reject(new Error(`OpenAlex API returned ${response.status}`))),
+    fetchJson(`https://api.crossref.org/works?${mode === 'author' ? 'query.author' : 'query.title'}=${encodedQuery}&filter=type:book,from-pub-date:1800-01-01&rows=40&select=title,author,published,URL,ISBN,subtype`)
+      .then(response => response.ok ? response.json() : Promise.reject(new Error(`Crossref API returned ${response.status}`))),
   ];
 
-  const [openLibrary, googleBooks, hathiTrust, internetArchive, gutendex, librivox] = await Promise.allSettled(requests);
+  const [openLibrary, googleBooks, hathiTrust, internetArchive, gutendex, librivox, openAlex, crossref] = await Promise.allSettled(requests);
   const results = [];
 
   if (openLibrary.status === 'fulfilled') {
@@ -111,6 +115,26 @@ module.exports = async function handler(req, res) {
     })));
   }
 
+  if (openAlex.status === 'fulfilled') {
+    results.push(...(openAlex.value.results || []).map(work => ({
+      title: work.title || 'Sin título',
+      description: work.authorships?.map(author => author.author?.display_name).filter(Boolean).join(', ') || 'Libro disponible en OpenAlex',
+      genre: work.concepts?.slice(0, 5).map(concept => concept.display_name).join(', ') || '', chapters: null,
+      image: work.primary_location?.source?.display_name ? '' : '',
+      url: work.primary_location?.landing_page_url || work.doi || `https://openalex.org/${work.id?.split('/').pop() || ''}`,
+      type: 'Book', year: work.publication_year || '',
+    })));
+  }
+
+  if (crossref.status === 'fulfilled') {
+    results.push(...(crossref.value.message?.items || []).map(work => ({
+      title: Array.isArray(work.title) ? work.title[0] : work.title || 'Sin título',
+      description: Array.isArray(work.author) ? work.author.map(author => `${author.given || ''} ${author.family || ''}`.trim()).filter(Boolean).join(', ') : 'Libro disponible en Crossref',
+      genre: '', chapters: null, image: '',
+      url: work.URL || '', type: 'Book', year: work.published?.['date-parts']?.[0]?.[0] || '',
+    })));
+  }
+
   const uniqueResults = [];
   const seenTitles = new Set();
   for (const result of results) {
@@ -121,7 +145,7 @@ module.exports = async function handler(req, res) {
       seenTitles.add(key);
       uniqueResults.push({ ...result, title });
     }
-    if (uniqueResults.length >= 60) break;
+    if (uniqueResults.length >= 100) break;
   }
 
   if (uniqueResults.length === 0) {
@@ -151,7 +175,7 @@ const searchCache = new Map();
 
 async function fetchJson(url, options = {}) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
+  const timeout = setTimeout(() => controller.abort(), 4000);
   try {
     return await fetch(url, { ...options, signal: controller.signal });
   } finally {
