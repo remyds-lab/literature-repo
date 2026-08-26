@@ -96,12 +96,21 @@ function addFromSearchResult(result) {
   const prefill = {
     title: result.title || '',
     category: guessCategory(result),
+    group: result.group || guessGroup(result),
     genre: result.genre || '',
     description: result.description || '',
+    chapters: result.chapters ?? null,
+    pages: result.pages ?? null,
     imageUrl: result.image || '',
     sourceUrl: result.url || '',
   };
   openModal(null, prefill);
+}
+
+function guessGroup(result) {
+  if (currentSource === 'movies') return 'media';
+  if (currentSource === 'books') return 'written';
+  return 'visual';
 }
 
 function guessCategory(result) {

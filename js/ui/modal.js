@@ -6,6 +6,24 @@ import { refreshCurrentPage } from '../router.js';
 let editId = null;
 let currentRating = 0;
 
+const categoriesByGroup = {
+  visual: ['Manga', 'Manhua', 'Manhwa'],
+  written: ['Novela Web', 'LN', 'Literatura Clásica', 'Literatura Juvenil', 'Ciencia Ficción'],
+  media: ['Serie', 'Película'],
+};
+
+function groupForCategory(category) {
+  return Object.entries(categoriesByGroup).find(([, categories]) => categories.includes(category))?.[0] || 'visual';
+}
+
+function updateCategoryOptions(group, selectedCategory = '') {
+  const select = $('#fCategory');
+  if (!select) return;
+  const categories = categoriesByGroup[group] || categoriesByGroup.visual;
+  select.innerHTML = categories.map(category => `<option value="${category}">${category}</option>`).join('');
+  select.value = categories.includes(selectedCategory) ? selectedCategory : categories[0];
+}
+
 function renderCommentHistory(item) {
   const history = $('#commentHistory');
   const list = $('#commentHistoryList');
@@ -32,6 +50,7 @@ export function setupModal() {
     if (e.target === $('#itemModal')) closeModal();
   });
   $('#itemForm')?.addEventListener('submit', handleSave);
+  $('#fGroup')?.addEventListener('change', () => updateCategoryOptions($('#fGroup').value));
   $('#deleteItemBtn')?.addEventListener('click', handleDelete);
 
   // Star rating interaction
@@ -73,10 +92,13 @@ export function openModal(item = null, prefill = null) {
     editId = item.id;
     $('#modalTitle').textContent = 'Editar Ítem';
     $('#fTitle').value = item.title || '';
-    $('#fCategory').value = item.category || 'Manga';
+    $('#fGroup').value = groupForCategory(item.category);
+    updateCategoryOptions($('#fGroup').value, item.category);
     $('#fGenre').value = item.genre || '';
     $('#fStatus').value = item.status || 'Planeo Leer';
     $('#fDescription').value = item.description || '';
+    $('#fChapters').value = item.chapters ?? '';
+    $('#fPages').value = item.pages ?? '';
     renderCommentHistory(item);
     $('#fSourceUrl').value = item.sourceUrl || '';
     $('#fImageUrl').value = item.imageUrl || '';
@@ -92,9 +114,12 @@ export function openModal(item = null, prefill = null) {
     // Adding from search result
     $('#modalTitle').textContent = 'Añadir a Biblioteca';
     $('#fTitle').value = prefill.title || '';
-    $('#fCategory').value = prefill.category || 'Manga';
+    $('#fGroup').value = prefill.group || groupForCategory(prefill.category);
+    updateCategoryOptions($('#fGroup').value, prefill.category);
     $('#fGenre').value = prefill.genre || '';
     $('#fDescription').value = prefill.description || '';
+    $('#fChapters').value = prefill.chapters ?? '';
+    $('#fPages').value = prefill.pages ?? '';
     $('#fSourceUrl').value = prefill.sourceUrl || '';
     $('#fImageUrl').value = prefill.imageUrl || '';
     renderCommentHistory(null);
@@ -102,6 +127,10 @@ export function openModal(item = null, prefill = null) {
   } else {
     // New manual add
     $('#modalTitle').textContent = 'Nuevo Ítem';
+    $('#fGroup').value = 'visual';
+    updateCategoryOptions('visual', 'Manga');
+    $('#fChapters').value = '';
+    $('#fPages').value = '';
     $('#deleteItemBtn').style.display = 'none';
     renderCommentHistory(null);
   }
@@ -136,6 +165,8 @@ function handleSave(e) {
     id: editId || Date.now().toString(),
     title: titleVal,
     category: $('#fCategory').value,
+    chapters: $('#fChapters').value === '' ? null : Number($('#fChapters').value),
+    pages: $('#fPages').value === '' ? null : Number($('#fPages').value),
     genre: $('#fGenre').value.trim(),
     status: $('#fStatus').value,
     description: $('#fDescription').value.trim(),
