@@ -75,6 +75,7 @@ export function openModal(item = null, prefill = null) {
     $('#fTitle').value = item.title || '';
     $('#fCategory').value = item.category || 'Manga';
     $('#fStatus').value = item.status || 'Planeo Leer';
+    $('#fDescription').value = item.description || '';
     renderCommentHistory(item);
     $('#fSourceUrl').value = item.sourceUrl || '';
     $('#fImageUrl').value = item.imageUrl || '';
@@ -91,6 +92,7 @@ export function openModal(item = null, prefill = null) {
     $('#modalTitle').textContent = 'Añadir a Biblioteca';
     $('#fTitle').value = prefill.title || '';
     $('#fCategory').value = prefill.category || 'Manga';
+    $('#fDescription').value = prefill.description || '';
     $('#fSourceUrl').value = prefill.sourceUrl || '';
     $('#fImageUrl').value = prefill.imageUrl || '';
     renderCommentHistory(null);
@@ -133,6 +135,7 @@ function handleSave(e) {
     title: titleVal,
     category: $('#fCategory').value,
     status: $('#fStatus').value,
+    description: $('#fDescription').value.trim(),
     rating: currentRating || null,
     comment: comment || existing?.comment || '',
     comments,
