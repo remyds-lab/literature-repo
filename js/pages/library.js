@@ -74,6 +74,7 @@ export function setupLibrary() {
 
   $('#libSearch')?.addEventListener('input', renderLibrary);
   $('#libStatusFilter')?.addEventListener('change', renderLibrary);
+  $('#libPriorityFilter')?.addEventListener('change', renderLibrary);
   $('#libGenreFilter')?.addEventListener('change', renderLibrary);
   $('#libSortBy')?.addEventListener('change', renderLibrary);
   $('#manualAddBtn')?.addEventListener('click', () => openModal());
@@ -84,6 +85,7 @@ export function renderLibrary() {
   updateGenreFilter(items);
   const query = ($('#libSearch')?.value || '').toLowerCase();
   const statusFilter = $('#libStatusFilter')?.value || '';
+  const priorityFilter = $('#libPriorityFilter')?.value || '';
   const sortBy = $('#libSortBy')?.value || 'dateAdded';
 
   let filtered = items.filter(i => {
@@ -92,7 +94,8 @@ export function renderLibrary() {
     const matchGenre = currentGenre === '' || genres.includes(currentGenre.toLowerCase());
     const matchGroup = currentGroup === '' || itemGroup(i) === currentGroup;
     const matchStatus = statusFilter === '' || i.status === statusFilter;
-    return matchTitle && matchGenre && matchGroup && matchStatus;
+    const matchPriority = priorityFilter === '' || (i.priority || 'medium') === priorityFilter;
+    return matchTitle && matchGenre && matchGroup && matchStatus && matchPriority;
   });
 
   if (sortBy === 'title') {
@@ -123,6 +126,5 @@ export function renderLibrary() {
 }
 
 function priorityOf(item) {
-  if (!['Planeo Leer', 'Planeo Ver'].includes(item.status)) return 0;
   return { high: 3, medium: 2, low: 1 }[item.priority] || 2;
 }

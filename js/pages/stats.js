@@ -62,26 +62,26 @@ function renderPrioritySummary() {
   const container = $('#prioritySummary');
   if (!container) return;
   const items = getItems();
-  const planned = items.filter(item => ['Planeo Leer', 'Planeo Ver'].includes(item.status));
-  const priorities = planned.reduce((counts, item) => {
+  const prioritized = items;
+  const priorities = prioritized.reduce((counts, item) => {
     const priority = item.priority || 'medium';
     counts[priority] = (counts[priority] || 0) + 1;
     return counts;
   }, {});
-  const groups = planned.reduce((counts, item) => {
+  const groups = prioritized.reduce((counts, item) => {
     const group = ['Manga', 'Manhua', 'Manhwa'].includes(item.category)
       ? 'Visual'
       : ['Serie', 'Película'].includes(item.category) ? 'Media' : 'Escrito';
     counts[group] = (counts[group] || 0) + 1;
     return counts;
   }, {});
-  const withProgress = planned.filter(item => Number.isFinite(item.currentChapter) && Number.isFinite(item.chapters) && item.chapters > 0);
+  const withProgress = prioritized.filter(item => Number.isFinite(item.currentChapter) && Number.isFinite(item.chapters) && item.chapters > 0);
   const averageProgress = withProgress.length
     ? Math.round(withProgress.reduce((sum, item) => sum + Math.min(item.currentChapter, item.chapters) / item.chapters, 0) / withProgress.length * 100)
     : 0;
 
   container.innerHTML = `
-    <div class="priority-total"><strong>${planned.length}</strong><span>pendientes por leer o ver</span></div>
+    <div class="priority-total"><strong>${prioritized.length}</strong><span>elementos con prioridad</span></div>
     <div class="priority-groups">${Object.entries(groups).map(([group, count]) => `
       <span class="priority-group"><b>${count}</b> ${group}</span>
     `).join('') || '<span class="empty-state">No hay prioridades guardadas.</span>'}</div>

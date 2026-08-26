@@ -88,8 +88,7 @@ function addGenre() {
 
 function updatePriorityVisibility() {
   const field = $('#priorityField');
-  const status = $('#fStatus');
-  if (field && status) field.hidden = !['Planeo Leer', 'Planeo Ver'].includes(status.value);
+  if (field) field.hidden = false;
 }
 
 function renderCommentHistory(item) {
