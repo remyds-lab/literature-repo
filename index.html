@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediaVault – Tu Biblioteca Multimedia</title>
+  <meta name="description" content="Organiza mangas, manhwas, novelas, series, películas y más. Puntuaciones, comentarios, y seguimiento completo." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="theme-midnight">
+
+  <!-- ═══════════ TOAST CONTAINER ═══════════ -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- ═══════════ NAVIGATION ═══════════ -->
+  <nav class="navbar" id="navbar">
+    <a href="#home" class="nav-logo">
+      <span class="logo-icon">📚</span>
+      <span class="logo-text">Media<strong>Vault</strong></span>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="#home" class="nav-link active" data-page="home">
+        <span class="nav-icon">🏠</span> Inicio
+      </a>
+      <a href="#library" class="nav-link" data-page="library">
+        <span class="nav-icon">📖</span> Biblioteca
+      </a>
+      <a href="#search" class="nav-link" data-page="search">
+        <span class="nav-icon">🔍</span> Buscar &amp; Añadir
+      </a>
+      <a href="#stats" class="nav-link" data-page="stats">
+        <span class="nav-icon">📊</span> Estadísticas
+      </a>
+    </div>
+    <div class="nav-actions">
+      <div class="theme-selector">
+        <button class="theme-btn" id="themeToggleBtn" title="Cambiar tema">🎨</button>
+        <div class="theme-dropdown hidden" id="themeDropdown">
+          <button class="theme-option" data-theme="midnight"><span class="theme-dot midnight"></span>Midnight</button>
+          <button class="theme-option" data-theme="void"><span class="theme-dot void"></span>Void</button>
+          <button class="theme-option" data-theme="graphite"><span class="theme-dot graphite"></span>Graphite</button>
+          <button class="theme-option" data-theme="plum"><span class="theme-dot plum"></span>Plum</button>
+          <button class="theme-option" data-theme="ash"><span class="theme-dot ash"></span>Ash</button>
+          <button class="theme-option" data-theme="jade"><span class="theme-dot jade"></span>Jade</button>
+        </div>
+      </div>
+      <button class="hamburger" id="hamburger">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ═══════════ PAGE: HOME ═══════════ -->
+  <section id="page-home" class="page page-active">
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-bg"></div>
+      <div class="hero-content">
+        <h1 class="hero-title">Tu universo multimedia,<br><span class="accent-text">organizado.</span></h1>
+        <p class="hero-subtitle">Mangas, manhwas, novelas, series, películas y más. Todo en un solo lugar con seguimiento, puntuaciones y comentarios personales.</p>
+        <div class="hero-actions">
+          <a href="#library" class="btn btn-primary btn-lg">Explorar Biblioteca</a>
+          <a href="#search" class="btn btn-outline btn-lg">Añadir Contenido</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="floating-cards">
+          <div class="floating-card fc-1">📖 Manga</div>
+          <div class="floating-card fc-2">🎬 Películas</div>
+          <div class="floating-card fc-3">📺 Series</div>
+          <div class="floating-card fc-4">📕 Novelas</div>
+          <div class="floating-card fc-5">🎌 Manhwa</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="section">
+      <h2 class="section-title">Resumen Rápido</h2>
+      <div class="stats-row" id="homeStats">
+        <div class="stat-card">
+          <span class="stat-icon">📚</span>
+          <span class="stat-number" id="statTotal">0</span>
+          <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">👀</span>
+          <span class="stat-number" id="statActive">0</span>
+          <span class="stat-label">En Progreso</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">✅</span>
+          <span class="stat-number" id="statCompleted">0</span>
+          <span class="stat-label">Completados</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">⭐</span>
+          <span class="stat-number" id="statAvgRating">—</span>
+          <span class="stat-label">Puntuación Media</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Additions -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Añadidos Recientemente</h2>
+        <a href="#library" class="link-accent">Ver todo →</a>
+      </div>
+      <div class="cards-row" id="recentItems">
+        <p class="empty-state">Aún no hay ítems. <a href="#search" class="link-accent">¡Empieza a añadir!</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ PAGE: LIBRARY ═══════════ -->
+  <section id="page-library" class="page">
+    <div class="page-header">
+      <h1 class="page-title">Mi Biblioteca</h1>
+      <button class="btn btn-primary" id="manualAddBtn">＋ Añadir Manual</button>
+    </div>
+
+    <!-- Library Groups -->
+    <div class="library-groups" id="libraryGroups">
+      <button class="library-group-tab active" data-group="">Todo</button>
+      <button class="library-group-tab" data-group="media">Media</button>
+      <button class="library-group-tab" data-group="written">Escrito</button>
+      <button class="library-group-tab" data-group="visual">Visual</button>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="category-tabs" id="categoryTabs">
+      <button class="cat-tab active" data-cat="">Todos</button>
+      <button class="cat-tab" data-cat="">Todos</button>
+      <button class="cat-tab" data-cat="Manga" data-group="visual">Manga</button>
+      <button class="cat-tab" data-cat="Manhua" data-group="visual">Manhua</button>
+      <button class="cat-tab" data-cat="Manhwa" data-group="visual">Manhwa</button>
+      <button class="cat-tab" data-cat="Novela Web" data-group="written">Novela Web</button>
+      <button class="cat-tab" data-cat="LN" data-group="written">LN</button>
+      <button class="cat-tab" data-cat="Literatura Clásica" data-group="written">Lit. Clásica</button>
+      <button class="cat-tab" data-cat="Literatura Juvenil" data-group="written">Lit. Juvenil</button>
+      <button class="cat-tab" data-cat="Ciencia Ficción" data-group="written">Ciencia Ficción</button>
+      <button class="cat-tab" data-cat="Serie" data-group="media">Series</button>
+      <button class="cat-tab" data-cat="Película" data-group="media">Películas</button>
+    </div>
+
+    <!-- Filters -->
+    <div class="library-controls">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="libSearch" placeholder="Buscar en tu biblioteca..." />
+      </div>
+      <select id="libStatusFilter" class="filter-select">
+        <option value="">Todos los estados</option>
+        <option value="Viendo">Viendo</option>
+        <option value="Leyendo">Leyendo</option>
+        <option value="Planeo Ver">Planeo Ver</option>
+        <option value="Planeo Leer">Planeo Leer</option>
+        <option value="Visto">Visto</option>
+        <option value="Leído">Leído</option>
+        <option value="En Pausa">En Pausa</option>
+        <option value="Abandonado">Abandonado</option>
+      </select>
+      <select id="libSortBy" class="filter-select">
+        <option value="dateAdded">Más recientes</option>
+        <option value="title">Título A-Z</option>
+        <option value="rating">Mayor puntuación</option>
+      </select>
+    </div>
+
+    <!-- Items Grid -->
+    <div class="items-grid" id="libraryGrid">
+      <!-- Rendered by JS -->
+    </div>
+  </section>
+
+  <!-- ═══════════ PAGE: SEARCH & ADD ═══════════ -->
+  <section id="page-search" class="page">
+    <div class="page-header">
+      <h1 class="page-title">Buscar &amp; Añadir</h1>
+    </div>
+
+    <!-- Source Tabs -->
+    <div class="source-tabs" id="sourceTabs">
+      <button class="src-tab active" data-source="manga">
+        <span class="src-icon">🎌</span>
+        <span>MangaUpdates</span>
+        <small>Manga · Manhwa · Manhua</small>
+      </button>
+      <button class="src-tab" data-source="movies">
+        <span class="src-icon">🎬</span>
+        <span>Películas y Series</span>
+        <small>Películas · Series</small>
+      </button>
+      <button class="src-tab" data-source="books">
+        <span class="src-icon">📖</span>
+        <span>Google Books</span>
+        <small>Libros · Literatura</small>
+      </button>
+    </div>
+
+    <!-- Search Input -->
+    <div class="search-section">
+      <div class="search-box search-box-lg">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="extSearch" placeholder="Buscar título..." />
+        <button class="btn btn-primary" id="extSearchBtn">Buscar</button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="search-results" id="searchResults">
+      <div class="search-placeholder">
+        <span class="placeholder-icon">🔎</span>
+        <p>Escribe un título y presiona buscar para encontrar contenido en fuentes externas.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ PAGE: STATS ═══════════ -->
+  <section id="page-stats" class="page">
+    <div class="page-header">
+      <h1 class="page-title">Estadísticas</h1>
+    </div>
+
+    <div class="stats-dashboard">
+      <!-- Category Breakdown -->
+      <div class="dashboard-card">
+        <h3 class="card-title">Por Categoría</h3>
+        <div class="chart-bars" id="chartCategory"></div>
+      </div>
+
+      <!-- Status Breakdown -->
+      <div class="dashboard-card">
+        <h3 class="card-title">Por Estado</h3>
+        <div class="chart-bars" id="chartStatus"></div>
+      </div>
+
+      <!-- Top Rated -->
+      <div class="dashboard-card">
+        <h3 class="card-title">Mejor Puntuados</h3>
+        <div class="top-rated-list" id="topRatedList"></div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="dashboard-card full-width">
+        <h3 class="card-title">Actividad Reciente</h3>
+        <div class="timeline" id="timeline"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ MODAL: ITEM DETAIL / EDIT ═══════════ -->
+  <div class="modal-overlay hidden" id="itemModal">
+    <div class="modal-panel">
+      <button class="modal-close" id="modalClose">&times;</button>
+      <h2 class="modal-title" id="modalTitle">Nuevo Ítem</h2>
+      <form id="itemForm" class="modal-form">
+        <div class="form-group">
+          <label for="fTitle">Título</label>
+          <input type="text" id="fTitle" required placeholder="Nombre del manga, serie, película..." />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fCategory">Categoría</label>
+            <select id="fCategory" required>
+              <option value="Manga">Manga</option>
+              <option value="Manhua">Manhua</option>
+              <option value="Manhwa">Manhwa</option>
+              <option value="Novela Web">Novela Web</option>
+              <option value="LN">Light Novel</option>
+              <option value="Literatura Clásica">Literatura Clásica</option>
+              <option value="Literatura Juvenil">Literatura Juvenil</option>
+              <option value="Ciencia Ficción">Ciencia Ficción</option>
+              <option value="Serie">Serie</option>
+              <option value="Película">Película</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="fStatus">Estado</label>
+            <select id="fStatus" required>
+              <option value="Planeo Leer">Planeo Leer</option>
+              <option value="Planeo Ver">Planeo Ver</option>
+              <option value="Leyendo">Leyendo</option>
+              <option value="Viendo">Viendo</option>
+              <option value="Leído">Leído</option>
+              <option value="Visto">Visto</option>
+              <option value="En Pausa">En Pausa</option>
+              <option value="Abandonado">Abandonado</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Puntuación</label>
+          <div class="star-rating" id="starRating">
+            <span class="star" data-val="1">★</span>
+            <span class="star" data-val="2">★</span>
+            <span class="star" data-val="3">★</span>
+            <span class="star" data-val="4">★</span>
+            <span class="star" data-val="5">★</span>
+            <span class="star" data-val="6">★</span>
+            <span class="star" data-val="7">★</span>
+            <span class="star" data-val="8">★</span>
+            <span class="star" data-val="9">★</span>
+            <span class="star" data-val="10">★</span>
+          </div>
+          <input type="hidden" id="fRating" value="" />
+        </div>
+        <div class="form-group">
+          <label for="fComment">Comentario</label>
+          <textarea id="fComment" rows="3" placeholder="Tus notas personales..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="fSourceUrl">Enlace externo</label>
+          <input type="url" id="fSourceUrl" placeholder="https://..." />
+        </div>
+        <input type="hidden" id="fImageUrl" value="" />
+        <div class="form-actions">
+          <button type="button" class="btn btn-danger" id="deleteItemBtn" style="display:none">Eliminar</button>
+          <div class="form-actions-right">
+            <button type="button" class="btn btn-outline" id="cancelModalBtn">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

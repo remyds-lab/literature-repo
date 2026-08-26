@@ -1,0 +1,27 @@
+{
+  "name": "mediavault",
+  "version": "2.0.0",
+  "description": "MediaVault – Tu biblioteca multimedia premium con búsqueda integrada",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx -y http-server -c-1 -p 3000 .",
+    "dev:api": "npx -y vercel dev --listen 3000",
+    "build": "echo \"Static site – no build step\"",
+    "start": "npx -y http-server -c-1 -p 3000 ."
+  },
+  "keywords": [
+    "manga",
+    "novela",
+    "serie",
+    "pelicula",
+    "tracker"
+  ],
+  "author": "gagli",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "dependencies": {
+    "pg": "^8.23.0"
+  }
+}
