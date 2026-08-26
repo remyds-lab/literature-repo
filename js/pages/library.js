@@ -19,6 +19,12 @@ const categoryGroups = {
   'Manhwa': 'visual',
 };
 
+const statusesByGroup = {
+  visual: ['Planeo Leer', 'Leyendo', 'Leído', 'En Pausa', 'Abandonado'],
+  written: ['Planeo Leer', 'Leyendo', 'Leído', 'En Pausa', 'Abandonado'],
+  media: ['Planeo Ver', 'Viendo', 'Visto', 'En Pausa', 'Abandonado'],
+};
+
 function itemGroup(item) {
   return categoryGroups[item.category] || '';
 }
@@ -39,13 +45,27 @@ function updateGenreFilter(items) {
   currentGenre = select.value;
 }
 
+function updateStatusFilter() {
+  const select = $('#libStatusFilter');
+  if (!select) return;
+  const selected = select.value;
+  const statuses = currentGroup ? statusesByGroup[currentGroup] : [
+    ...new Set(Object.values(statusesByGroup).flat()),
+  ];
+  select.innerHTML = '<option value="">Todos los estados</option>' + statuses
+    .map(status => `<option value="${status}">${status}</option>`).join('');
+  select.value = statuses.includes(selected) ? selected : '';
+}
+
 export function setupLibrary() {
+  updateStatusFilter();
   $$('.library-group-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       $$('.library-group-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       currentGroup = tab.dataset.group;
       currentGenre = '';
+      updateStatusFilter();
       const genreFilter = $('#libGenreFilter');
       if (genreFilter) genreFilter.value = '';
       renderLibrary();

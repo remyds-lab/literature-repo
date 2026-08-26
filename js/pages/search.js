@@ -100,7 +100,7 @@ function addFromSearchResult(result) {
     genre: result.genre || '',
     description: result.description || '',
     chapters: result.chapters ?? null,
-    pages: result.pages ?? null,
+    currentChapter: result.currentChapter ?? null,
     imageUrl: result.image || '',
     sourceUrl: result.url || '',
   };

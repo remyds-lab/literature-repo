@@ -26,7 +26,7 @@ export function renderItemCard(item) {
           <span class="badge badge-status" data-status="${item.status}">${item.status}</span>
         </div>
         ${item.genre ? `<div class="item-card-genre">${escapeHtml(item.genre)}</div>` : ''}
-        ${(item.chapters != null || item.pages != null) ? `<div class="item-card-stats">${item.chapters != null ? `${item.chapters} capítulos` : ''}${item.chapters != null && item.pages != null ? ' · ' : ''}${item.pages != null ? `${item.pages} páginas` : ''}</div>` : ''}
+        ${item.chapters != null ? `<div class="item-card-stats">${item.currentChapter ?? 0} / ${item.chapters} capítulos</div>` : ''}
         ${item.description ? `<div class="item-card-description">${escapeHtml(item.description)}</div>` : ''}
         ${item.rating ? `<div class="item-card-rating">★ ${item.rating}/10</div>` : ''}
         ${item.comment ? `<div class="item-card-comment">${escapeHtml(item.comment)}</div>` : ''}

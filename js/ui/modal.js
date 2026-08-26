@@ -12,6 +12,12 @@ const categoriesByGroup = {
   media: ['Serie', 'Película'],
 };
 
+const statusesByGroup = {
+  visual: ['Planeo Leer', 'Leyendo', 'Leído', 'En Pausa', 'Abandonado'],
+  written: ['Planeo Leer', 'Leyendo', 'Leído', 'En Pausa', 'Abandonado'],
+  media: ['Planeo Ver', 'Viendo', 'Visto', 'En Pausa', 'Abandonado'],
+};
+
 function groupForCategory(category) {
   return Object.entries(categoriesByGroup).find(([, categories]) => categories.includes(category))?.[0] || 'visual';
 }
@@ -22,6 +28,14 @@ function updateCategoryOptions(group, selectedCategory = '') {
   const categories = categoriesByGroup[group] || categoriesByGroup.visual;
   select.innerHTML = categories.map(category => `<option value="${category}">${category}</option>`).join('');
   select.value = categories.includes(selectedCategory) ? selectedCategory : categories[0];
+}
+
+function updateStatusOptions(group, selectedStatus = '') {
+  const select = $('#fStatus');
+  if (!select) return;
+  const statuses = statusesByGroup[group] || statusesByGroup.visual;
+  select.innerHTML = statuses.map(status => `<option value="${status}">${status}</option>`).join('');
+  select.value = statuses.includes(selectedStatus) ? selectedStatus : statuses[0];
 }
 
 function renderCommentHistory(item) {
@@ -50,7 +64,11 @@ export function setupModal() {
     if (e.target === $('#itemModal')) closeModal();
   });
   $('#itemForm')?.addEventListener('submit', handleSave);
-  $('#fGroup')?.addEventListener('change', () => updateCategoryOptions($('#fGroup').value));
+  $('#fGroup')?.addEventListener('change', () => {
+    const group = $('#fGroup').value;
+    updateCategoryOptions(group);
+    updateStatusOptions(group, $('#fStatus').value);
+  });
   $('#deleteItemBtn')?.addEventListener('click', handleDelete);
 
   // Star rating interaction
@@ -94,11 +112,12 @@ export function openModal(item = null, prefill = null) {
     $('#fTitle').value = item.title || '';
     $('#fGroup').value = groupForCategory(item.category);
     updateCategoryOptions($('#fGroup').value, item.category);
+    updateStatusOptions($('#fGroup').value, item.status);
     $('#fGenre').value = item.genre || '';
     $('#fStatus').value = item.status || 'Planeo Leer';
     $('#fDescription').value = item.description || '';
     $('#fChapters').value = item.chapters ?? '';
-    $('#fPages').value = item.pages ?? '';
+    $('#fCurrentChapter').value = item.currentChapter ?? '';
     renderCommentHistory(item);
     $('#fSourceUrl').value = item.sourceUrl || '';
     $('#fImageUrl').value = item.imageUrl || '';
@@ -116,10 +135,11 @@ export function openModal(item = null, prefill = null) {
     $('#fTitle').value = prefill.title || '';
     $('#fGroup').value = prefill.group || groupForCategory(prefill.category);
     updateCategoryOptions($('#fGroup').value, prefill.category);
+    updateStatusOptions($('#fGroup').value, prefill.status);
     $('#fGenre').value = prefill.genre || '';
     $('#fDescription').value = prefill.description || '';
     $('#fChapters').value = prefill.chapters ?? '';
-    $('#fPages').value = prefill.pages ?? '';
+    $('#fCurrentChapter').value = prefill.currentChapter ?? '';
     $('#fSourceUrl').value = prefill.sourceUrl || '';
     $('#fImageUrl').value = prefill.imageUrl || '';
     renderCommentHistory(null);
@@ -129,8 +149,9 @@ export function openModal(item = null, prefill = null) {
     $('#modalTitle').textContent = 'Nuevo Ítem';
     $('#fGroup').value = 'visual';
     updateCategoryOptions('visual', 'Manga');
+    updateStatusOptions('visual');
+    $('#fCurrentChapter').value = '';
     $('#fChapters').value = '';
-    $('#fPages').value = '';
     $('#deleteItemBtn').style.display = 'none';
     renderCommentHistory(null);
   }
@@ -165,8 +186,8 @@ function handleSave(e) {
     id: editId || Date.now().toString(),
     title: titleVal,
     category: $('#fCategory').value,
+    currentChapter: $('#fCurrentChapter').value === '' ? null : Number($('#fCurrentChapter').value),
     chapters: $('#fChapters').value === '' ? null : Number($('#fChapters').value),
-    pages: $('#fPages').value === '' ? null : Number($('#fPages').value),
     genre: $('#fGenre').value.trim(),
     status: $('#fStatus').value,
     description: $('#fDescription').value.trim(),
