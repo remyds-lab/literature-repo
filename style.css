@@ -451,6 +451,8 @@ input, select, textarea { font-family: inherit; }
   display: flex; gap: 0.8rem; padding: 1.2rem 2.5rem;
   flex-wrap: wrap;
 }
+.library-controls .search-box { flex: 1 1 100%; }
+.library-controls .filter-select { flex: 1 1 180px; min-width: 0; }
 .search-box {
   display: flex; align-items: center; gap: 0.5rem;
   background: var(--bg-input); border: 1px solid var(--border);
@@ -714,10 +716,38 @@ input, select, textarea { font-family: inherit; }
   .section { padding: 1.5rem 1.2rem; }
   .category-tabs { padding: 0 1.2rem; }
   .library-groups { padding: 1rem 1.2rem 0.6rem; overflow-x: auto; }
-  .library-controls { padding: 1rem 1.2rem; }
-  .items-grid { padding: 1rem 1.2rem 2rem; }
+  .library-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+    padding: 1rem 1.2rem;
+  }
+  .library-controls .search-box,
+  .library-controls .filter-select { width: 100%; }
+  .library-controls .search-box,
+  .library-controls .filter-select:nth-of-type(3) { grid-column: 1 / -1; }
+  .library-controls .filter-select { flex: initial; font-size: 0.8rem; padding: 0.65rem 0.7rem; }
+  .items-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 0.75rem 1.2rem 2rem;
+  }
+  .item-card { display: grid; grid-template-columns: 64px minmax(0, 1fr); min-height: 96px; }
+  .item-card-img, .item-card-img-placeholder { width: 64px; height: 96px; }
+  .item-card-body { min-width: 0; padding: 0.75rem; }
+  .item-card-meta { gap: 0.3rem; }
+  .item-card-meta .badge-priority { display: none; }
+  .item-card-genre { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-card-description { -webkit-line-clamp: 2; }
   .search-section { padding: 0 1.2rem; }
   .search-results { padding: 0 1.2rem 2rem; }
+  .search-results-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+  .result-card { gap: 0.75rem; padding: 0.75rem; border-radius: 0.75rem; }
+  .result-card-img { width: 64px; height: 88px; }
+  .result-card-title { font-size: 0.85rem; }
+  .result-card-desc { -webkit-line-clamp: 2; }
+  .result-card-actions { flex-wrap: wrap; }
+  .result-card-actions .btn { flex: 1 1 auto; min-width: 0; padding-inline: 0.55rem; font-size: 0.75rem; }
   .stats-dashboard { padding: 1rem 1.2rem 2rem; grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
 }
