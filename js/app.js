@@ -5,8 +5,10 @@ import { setupModal } from './ui/modal.js';
 import { setupLibrary } from './pages/library.js';
 import { setupSearch } from './pages/search.js';
 import { setupRouter, refreshCurrentPage } from './router.js';
+import { setupAuth } from './auth.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+  if (!await setupAuth()) return;
   loadItems();
   loadTheme();
   setupNavbar();

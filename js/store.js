@@ -1,4 +1,6 @@
-const STORAGE_KEY = 'mediaVault_items';
+import { getCurrentUser, getUserItemsKey } from './auth.js';
+
+const LEGACY_STORAGE_KEY = 'mediaVault_items';
 
 export let items = [];
 
@@ -20,7 +22,7 @@ export function getItems() {
 
 export function loadItems() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(getUserItemsKey()) || (getCurrentUser() === 'caro' ? localStorage.getItem(LEGACY_STORAGE_KEY) : null);
     const parsed = raw ? JSON.parse(raw) : [];
     items = Array.isArray(parsed) ? parsed.map(normalizeItem) : [];
   } catch (err) {
@@ -33,7 +35,7 @@ export function saveItems(newItems) {
   if (newItems) {
     items = newItems;
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  localStorage.setItem(getUserItemsKey(), JSON.stringify(items));
   syncToBackend();
 }
 
@@ -56,6 +58,7 @@ export function deleteItem(id) {
 }
 
 async function syncToBackend() {
+  if (getCurrentUser() !== 'caro') return;
   try {
     await fetch('/api/media', {
       method: 'PUT',
@@ -68,13 +71,16 @@ async function syncToBackend() {
 }
 
 export async function loadFromBackend() {
+  if (getCurrentUser() !== 'caro') return;
   try {
     const res = await fetch('/api/media');
     if (res.ok) {
       const remote = await res.json();
       if (Array.isArray(remote) && remote.length >= items.length) {
         items = remote.map(normalizeItem);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+        localStorage.setItem(getUserItemsKey(), JSON.stringify(items));
+      } else if (Array.isArray(remote) && items.length > remote.length) {
+        await syncToBackend();
       }
     }
   } catch (err) {

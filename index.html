@@ -15,6 +15,26 @@
   <!-- ═══════════ TOAST CONTAINER ═══════════ -->
   <div id="toastContainer" class="toast-container"></div>
 
+  <main class="auth-screen" id="authScreen">
+    <section class="auth-panel">
+      <div class="auth-brand">📚 Media<strong>Vault</strong></div>
+      <h1 id="authTitle">Bienvenido</h1>
+      <p id="authSubtitle">Entra para continuar con tu biblioteca.</p>
+      <form id="authForm" class="auth-form">
+        <label for="authUsername">Usuario</label>
+        <input id="authUsername" type="text" autocomplete="username" required placeholder="Tu usuario" />
+        <label for="authPassword">Clave</label>
+        <input id="authPassword" type="password" autocomplete="current-password" required placeholder="Tu clave" />
+        <p id="authMessage" class="auth-message" aria-live="polite"></p>
+        <button class="btn btn-primary" id="authSubmit" type="submit">Entrar</button>
+      </form>
+      <button class="auth-switch" id="authSwitch" type="button">Crear una cuenta</button>
+      <small class="auth-hint">Cuenta inicial: caro / 1234</small>
+    </section>
+  </main>
+
+  <div id="appShell" class="app-shell">
+
   <!-- ═══════════ NAVIGATION ═══════════ -->
   <nav class="navbar" id="navbar">
     <a href="#home" class="nav-logo">
@@ -34,6 +54,9 @@
       <a href="#stats" class="nav-link" data-page="stats">
         <span class="nav-icon">📊</span> Estadísticas
       </a>
+      <button class="nav-link nav-logout" id="logoutBtn" type="button">
+        <span class="nav-icon">↪</span> Salir
+      </button>
     </div>
     <div class="nav-actions">
       <div class="theme-selector">
@@ -371,6 +394,8 @@
         </div>
       </form>
     </div>
+  </div>
+
   </div>
 
   <script type="module" src="js/app.js"></script>
