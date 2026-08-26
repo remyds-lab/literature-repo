@@ -17,6 +17,9 @@ export function handleRoute() {
   const targetPage = $(`#page-${pageName}`);
   if (targetPage) targetPage.classList.add('page-active');
 
+  const navbar = $('#navbar');
+  if (navbar) navbar.classList.toggle('home-route', pageName === 'home');
+
   $$('.nav-link').forEach(l => {
     l.classList.toggle('active', l.dataset.page === pageName);
   });
