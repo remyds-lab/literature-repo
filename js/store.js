@@ -1,0 +1,71 @@
+const STORAGE_KEY = 'mediaVault_items';
+
+export let items = [];
+
+export function getItems() {
+  return items;
+}
+
+export function loadItems() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    items = Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.warn('Could not load local data, starting with an empty library.');
+    items = [];
+  }
+}
+
+export function saveItems(newItems) {
+  if (newItems) {
+    items = newItems;
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  syncToBackend();
+}
+
+export function addItem(item) {
+  items = [...items, item];
+  saveItems();
+}
+
+export function updateItem(id, updatedItem) {
+  const idx = items.findIndex(i => i.id === id);
+  if (idx !== -1) {
+    items[idx] = updatedItem;
+    saveItems();
+  }
+}
+
+export function deleteItem(id) {
+  items = items.filter(i => i.id !== id);
+  saveItems();
+}
+
+async function syncToBackend() {
+  try {
+    await fetch('/api/media', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(items),
+    });
+  } catch (err) {
+    console.warn('Sync error (offline mode):', err.message);
+  }
+}
+
+export async function loadFromBackend() {
+  try {
+    const res = await fetch('/api/media');
+    if (res.ok) {
+      const remote = await res.json();
+      if (Array.isArray(remote) && remote.length >= items.length) {
+        items = remote;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      }
+    }
+  } catch (err) {
+    console.warn('Could not load from backend, using local data.');
+  }
+}
