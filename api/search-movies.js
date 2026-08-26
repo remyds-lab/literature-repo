@@ -10,6 +10,7 @@ module.exports = async function handler(req, res) {
 
   const tmdbKey = process.env.TMDB_API_KEY;
   const omdbKey = process.env.OMDB_API_KEY;
+  const mode = ['director', 'actor'].includes(req.query.mode) ? req.query.mode : 'title';
   const tmdbGenres = {
     28: 'Acción', 12: 'Aventura', 16: 'Animación', 35: 'Comedia', 80: 'Crimen',
     99: 'Documental', 18: 'Drama', 10751: 'Familia', 14: 'Fantasía', 36: 'Historia',
@@ -23,6 +24,18 @@ module.exports = async function handler(req, res) {
       fetch(`https://api.themoviedb.org/3/search/multi?api_key=${encodeURIComponent(tmdbKey)}&language=es-ES&query=${encodeURIComponent(query)}&page=${page}`)
         .then(response => response.ok ? response.json() : Promise.reject(new Error(`TMDB API returned ${response.status}`)))
     )).then(pages => pages.flatMap(page => page.results || [])));
+    if (mode !== 'title') {
+      requests.push(fetch(`https://api.themoviedb.org/3/search/person?api_key=${encodeURIComponent(tmdbKey)}&language=es-ES&query=${encodeURIComponent(query)}`)
+        .then(response => response.ok ? response.json() : Promise.reject(new Error(`TMDB people API returned ${response.status}`)))
+        .then(data => Promise.all((data.results || []).slice(0, 5).map(person =>
+          fetch(`https://api.themoviedb.org/3/person/${person.id}/combined_credits?api_key=${encodeURIComponent(tmdbKey)}&language=es-ES`)
+            .then(response => response.ok ? response.json() : Promise.reject(new Error(`TMDB credits API returned ${response.status}`)))
+            .then(credits => (credits.cast || []).concat(credits.crew || []).filter(credit =>
+              (mode === 'actor' && credits.cast?.includes(credit)) ||
+              (mode === 'director' && credit.job === 'Director')
+            ))
+        )).then(credits => credits.flat())));
+    }
   }
   if (omdbKey) {
     requests.push(fetch(`https://www.omdbapi.com/?apikey=${encodeURIComponent(omdbKey)}&s=${encodeURIComponent(query)}&type=&r=json`)
@@ -40,6 +53,30 @@ module.exports = async function handler(req, res) {
       genre: item.show?.genres?.join(', ') || '', chapters: null, image: item.show?.image?.original || item.show?.image?.medium || '',
       url: item.show?.url || '', type: 'Series', year: item.show?.premiered?.slice(0, 4) || '',
     }))));
+  requests.push(fetch(`https://v3.sg.media-imdb.com/suggestion/x/${encodedQuery}.json`)
+    .then(response => response.ok ? response.json() : Promise.reject(new Error(`IMDb API returned ${response.status}`)))
+    .then(data => (data.d || []).slice(0, 40).map(item => ({
+      title: item.l || 'Sin título', description: item.s || '', genre: '', chapters: null,
+      image: item.i?.imageUrl || '', url: item.id ? `https://www.imdb.com/title/${item.id}/` : '',
+      type: item.q?.toLowerCase().includes('series') || item.q?.toLowerCase().includes('tv') ? 'Series' : 'Movie', year: item.y || '',
+    }))));
+  if (mode !== 'title') {
+    requests.push(fetch(`https://api.tvmaze.com/search/people?q=${encodeURIComponent(query)}`)
+      .then(response => response.ok ? response.json() : Promise.reject(new Error(`TVMaze people API returned ${response.status}`)))
+      .then(people => Promise.all((people || []).slice(0, 5).map(person =>
+        fetch(`https://api.tvmaze.com/people/${person.person.id}?embed=${mode === 'actor' ? 'castcredits' : 'crewcredits'}`)
+          .then(response => response.ok ? response.json() : Promise.reject(new Error(`TVMaze credits API returned ${response.status}`)))
+          .then(personData => {
+            const credits = personData._embedded?.[mode === 'actor' ? 'castcredits' : 'crewcredits'] || [];
+            return credits.map(credit => credit._embedded?.show || credit.show).filter(Boolean).map(show => ({
+              title: show.name || 'Sin título', description: show.summary?.replace(/<[^>]*>/g, '').slice(0, 200) || '',
+              genre: show.genres?.join(', ') || '', chapters: null,
+              image: show.image?.original || show.image?.medium || '', url: show.url || '', type: 'Series',
+              year: show.premiered?.slice(0, 4) || '',
+            }));
+          })
+      )).then(credits => credits.flat())));
+  }
 
   const responses = await Promise.allSettled(requests);
   const results = responses.filter(response => response.status === 'fulfilled').flatMap(response => response.value)

@@ -9,6 +9,7 @@ export function setupSearch() {
       $$('.src-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       currentSource = tab.dataset.source;
+      updateSearchModes();
       const resultsContainer = $('#searchResults');
       if (resultsContainer) {
         resultsContainer.innerHTML = `
@@ -19,6 +20,8 @@ export function setupSearch() {
       }
     });
   });
+
+  updateSearchModes();
 
   $('#extSearchBtn')?.addEventListener('click', doExternalSearch);
   $('#extSearch')?.addEventListener('keydown', (e) => {
@@ -36,7 +39,8 @@ async function doExternalSearch() {
   container.innerHTML = '<div class="spinner"></div>';
 
   try {
-    const res = await fetch(`/api/search-${currentSource}?q=${encodeURIComponent(query)}`);
+    const mode = $('#searchMode')?.value || 'title';
+    const res = await fetch(`/api/search-${currentSource}?q=${encodeURIComponent(query)}&mode=${mode}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     renderSearchResults(data);
@@ -49,6 +53,17 @@ async function doExternalSearch() {
         <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;">${escapeHtml(err.message)}</p>
       </div>`;
   }
+}
+
+function updateSearchModes() {
+  const select = $('#searchMode');
+  if (!select) return;
+  const modes = currentSource === 'movies'
+    ? [['title', 'Título'], ['director', 'Director'], ['actor', 'Actor']]
+    : currentSource === 'books'
+      ? [['title', 'Título'], ['author', 'Autor']]
+      : [['title', 'Título'], ['author', 'Autor']];
+  select.innerHTML = modes.map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
 }
 
 function renderSearchResults(data) {

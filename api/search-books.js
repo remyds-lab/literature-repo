@@ -8,16 +8,22 @@ module.exports = async function handler(req, res) {
   }
 
   const encodedQuery = encodeURIComponent(query);
+  const mode = req.query.mode === 'author' ? 'author' : 'title';
+  const openLibraryQuery = mode === 'author' ? `author:${encodedQuery}` : `title:${encodedQuery}`;
+  const googleQuery = mode === 'author' ? `inauthor:${encodedQuery}` : `intitle:${encodedQuery}`;
+  const hathiPath = mode === 'author' ? 'author' : 'title';
   const requests = [
-    fetch(`https://openlibrary.org/search.json?title=${encodedQuery}&limit=40&fields=title,author_name,first_publish_year,cover_i,key,subject`)
+    fetch(`https://openlibrary.org/search.json?q=${openLibraryQuery}&limit=40&fields=title,author_name,first_publish_year,cover_i,key,subject`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`Open Library API returned ${response.status}`))),
-    fetch(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodedQuery}&maxResults=40`)
+    fetch(`https://www.googleapis.com/books/v1/volumes?q=${googleQuery}&maxResults=40`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`Google Books API returned ${response.status}`))),
-    fetch(`https://catalog.hathitrust.org/api/volumes/brief/title/${encodedQuery}.json`)
+    fetch(`https://catalog.hathitrust.org/api/volumes/brief/${hathiPath}/${encodedQuery}.json`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`HathiTrust API returned ${response.status}`))),
+    fetch(`https://archive.org/advancedsearch.php?q=${mode === 'author' ? `creator:%22${encodedQuery}%22` : `title:%22${encodedQuery}%22`}&fl[]=identifier,title,description,creator,year&rows=40&output=json`)
+      .then(response => response.ok ? response.json() : Promise.reject(new Error(`Internet Archive API returned ${response.status}`))),
   ];
 
-  const [openLibrary, googleBooks, hathiTrust] = await Promise.allSettled(requests);
+  const [openLibrary, googleBooks, hathiTrust, internetArchive] = await Promise.allSettled(requests);
   const results = [];
 
   if (openLibrary.status === 'fulfilled') {
@@ -65,6 +71,15 @@ module.exports = async function handler(req, res) {
         });
       }
     }
+  }
+
+  if (internetArchive.status === 'fulfilled') {
+    results.push(...(internetArchive.value.response?.docs || []).map(book => ({
+      title: book.title || 'Sin título',
+      description: Array.isArray(book.description) ? book.description[0] : book.description || book.creator || 'Libro disponible en Internet Archive',
+      genre: '', chapters: null, image: '',
+      url: `https://archive.org/details/${book.identifier}`, type: 'Book', year: book.year || '',
+    })));
   }
 
   const uniqueResults = [];
