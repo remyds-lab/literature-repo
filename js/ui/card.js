@@ -2,7 +2,7 @@ import { escapeHtml } from '../utils.js';
 
 export function getCategoryEmoji(cat) {
   const map = {
-    'Manga': '📖', 'Manhua': '🇨🇳', 'Manhwa': '🇰🇷',
+    'Manga': '📖', 'Manhua': '🇨🇳', 'Manhwa': '🇰🇷', 'Cómic': '🦸',
     'Novela Web': '🌐', 'LN': '📕', 'Literatura Clásica': '📜',
     'Literatura Juvenil': '📗', 'Ciencia Ficción': '🚀',
     'Serie': '📺', 'Película': '🎬'

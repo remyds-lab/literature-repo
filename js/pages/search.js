@@ -1,7 +1,7 @@
 import { $, $$, escapeHtml } from '../utils.js';
 import { openModal } from '../ui/modal.js';
 
-let currentSource = 'manga'; // manga | movies | books
+let currentSource = 'manga'; // manga | comics | movies | books
 
 export function setupSearch() {
   $$('.src-tab').forEach(tab => {
@@ -60,6 +60,8 @@ function updateSearchModes() {
   if (!select) return;
   const modes = currentSource === 'movies'
     ? [['title', 'Título'], ['director', 'Director'], ['actor', 'Actor']]
+    : currentSource === 'comics'
+      ? [['title', 'Título'], ['author', 'Autor']]
     : currentSource === 'books'
       ? [['title', 'Título'], ['author', 'Autor']]
       : [['title', 'Título'], ['author', 'Autor']];
@@ -113,6 +115,7 @@ function getResultEmoji(type) {
   if (type === 'Movie') return '\u{1F3AC}';
   if (type === 'Series') return '\u{1F4FA}';
   if (type === 'Manga') return '\u{1F4D6}';
+  if (type === 'Comic') return '\u{1F9B8}';
   return '\u{1F4DA}';
 }
 
@@ -138,6 +141,7 @@ function guessGroup(result) {
 }
 
 function guessCategory(result) {
+  if (currentSource === 'comics') return 'Cómic';
   if (currentSource === 'manga') {
     const type = (result.type || '').toLowerCase();
     if (type.includes('manhua')) return 'Manhua';

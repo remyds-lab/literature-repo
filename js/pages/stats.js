@@ -69,7 +69,7 @@ function renderPrioritySummary() {
     return counts;
   }, {});
   const groups = prioritized.reduce((counts, item) => {
-    const group = ['Manga', 'Manhua', 'Manhwa'].includes(item.category)
+    const group = ['Manga', 'Manhua', 'Manhwa', 'Cómic'].includes(item.category)
       ? 'Visual'
       : ['Serie', 'Película'].includes(item.category) ? 'Media' : 'Escrito';
     counts[group] = (counts[group] || 0) + 1;

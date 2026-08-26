@@ -17,6 +17,7 @@ const categoryGroups = {
   'Manga': 'visual',
   'Manhua': 'visual',
   'Manhwa': 'visual',
+  'Cómic': 'visual',
 };
 
 const statusesByGroup = {

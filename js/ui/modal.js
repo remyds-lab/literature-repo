@@ -7,7 +7,7 @@ let editId = null;
 let currentRating = 0;
 
 const categoriesByGroup = {
-  visual: ['Manga', 'Manhua', 'Manhwa'],
+  visual: ['Manga', 'Manhua', 'Manhwa', 'Cómic'],
   written: ['Novela Web', 'LN', 'Literatura Clásica', 'Literatura Juvenil', 'Ciencia Ficción'],
   media: ['Serie', 'Película'],
 };
