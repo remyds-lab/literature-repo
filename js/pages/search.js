@@ -96,6 +96,7 @@ function addFromSearchResult(result) {
   const prefill = {
     title: result.title || '',
     category: guessCategory(result),
+    genre: result.genre || '',
     description: result.description || '',
     imageUrl: result.image || '',
     sourceUrl: result.url || '',

@@ -25,6 +25,7 @@ export function renderItemCard(item) {
           <span class="badge badge-cat">${item.category}</span>
           <span class="badge badge-status" data-status="${item.status}">${item.status}</span>
         </div>
+        ${item.genre ? `<div class="item-card-genre">${escapeHtml(item.genre)}</div>` : ''}
         ${item.description ? `<div class="item-card-description">${escapeHtml(item.description)}</div>` : ''}
         ${item.rating ? `<div class="item-card-rating">★ ${item.rating}/10</div>` : ''}
         ${item.comment ? `<div class="item-card-comment">${escapeHtml(item.comment)}</div>` : ''}

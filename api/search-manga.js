@@ -21,6 +21,7 @@ module.exports = async function handler(req, res) {
       return {
         title: series.title || 'Sin título',
         description: series.description ? series.description.replace(/<[^>]*>/g, '').slice(0, 200) : '',
+        genre: Array.isArray(series.genres) ? series.genres.map(genre => typeof genre === 'string' ? genre : genre.name).filter(Boolean).join(', ') : '',
         image: series.image?.url?.original || '',
         url: series.url || '',
         type: series.type || 'Manga',
@@ -48,6 +49,7 @@ module.exports = async function handler(req, res) {
       description: series.synopsis
         ? series.synopsis.replace(/<[^>]*>/g, '').slice(0, 200)
         : '',
+      genre: series.genres?.map(genre => genre.name).join(', ') || '',
       image: series.images?.jpg?.large_image_url || series.images?.jpg?.image_url || '',
       url: series.url || '',
       type: series.type || 'Manga',
@@ -73,6 +75,7 @@ module.exports = async function handler(req, res) {
         return {
           title: title.en || title.es || Object.values(title)[0] || 'Sin título',
           description: description.en || description.es || Object.values(description)[0] || '',
+          genre: manga.attributes?.tags?.map(tag => tag.attributes?.name?.en || tag.attributes?.name?.es).filter(Boolean).join(', ') || '',
           image: fileName ? `https://uploads.mangadex.org/covers/${manga.id}/${fileName}.256.jpg` : '',
           url: `https://mangadex.org/title/${manga.id}`,
           type: 'Manga',

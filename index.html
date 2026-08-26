@@ -131,19 +131,9 @@
       <button class="library-group-tab" data-group="visual">Visual</button>
     </div>
 
-    <!-- Category Tabs -->
-    <div class="category-tabs" id="categoryTabs">
-      <button class="cat-tab active" data-cat="">Todos</button>
-      <button class="cat-tab" data-cat="Manga" data-group="visual">Manga</button>
-      <button class="cat-tab" data-cat="Manhua" data-group="visual">Manhua</button>
-      <button class="cat-tab" data-cat="Manhwa" data-group="visual">Manhwa</button>
-      <button class="cat-tab" data-cat="Novela Web" data-group="written">Novela Web</button>
-      <button class="cat-tab" data-cat="LN" data-group="written">LN</button>
-      <button class="cat-tab" data-cat="Literatura Clásica" data-group="written">Lit. Clásica</button>
-      <button class="cat-tab" data-cat="Literatura Juvenil" data-group="written">Lit. Juvenil</button>
-      <button class="cat-tab" data-cat="Ciencia Ficción" data-group="written">Ciencia Ficción</button>
-      <button class="cat-tab" data-cat="Serie" data-group="media">Series</button>
-      <button class="cat-tab" data-cat="Película" data-group="media">Películas</button>
+    <!-- Genre Tabs -->
+    <div class="category-tabs" id="genreTabs">
+      <button class="cat-tab active" data-genre="">Todos</button>
     </div>
 
     <!-- Filters -->
@@ -291,6 +281,10 @@
               <option value="Abandonado">Abandonado</option>
             </select>
           </div>
+        </div>
+        <div class="form-group">
+          <label for="fGenre">Género</label>
+          <input type="text" id="fGenre" placeholder="Acción, Fantasía, Romance" />
         </div>
         <div class="form-group">
           <label for="fDescription">Descripción</label>

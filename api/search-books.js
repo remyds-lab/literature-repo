@@ -9,7 +9,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const response = await fetch(
-      `https://openlibrary.org/search.json?title=${encodeURIComponent(query)}&limit=20&fields=title,author_name,first_publish_year,cover_i,key`
+      `https://openlibrary.org/search.json?title=${encodeURIComponent(query)}&limit=20&fields=title,author_name,first_publish_year,cover_i,key,subject`
     );
     if (!response.ok) throw new Error(`Open Library API returned ${response.status}`);
 
@@ -17,6 +17,7 @@ module.exports = async function handler(req, res) {
     const results = (data.docs || []).map(book => ({
       title: book.title || 'Sin título',
       description: book.author_name?.join(', ') || 'Libro disponible en Open Library',
+      genre: book.subject?.slice(0, 5).join(', ') || '',
       image: book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg` : '',
       url: book.key ? `https://openlibrary.org${book.key}` : `https://openlibrary.org/search?title=${encodeURIComponent(query)}`,
       type: 'Book',
@@ -40,6 +41,7 @@ module.exports = async function handler(req, res) {
       return {
         title: info.title || 'Sin título',
         description: info.description ? info.description.replace(/<[^>]*>/g, '').slice(0, 200) : '',
+        genre: info.categories?.join(', ') || '',
         image: info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '',
         url: info.infoLink || `https://books.google.com/books?id=${item.id}`,
         type: 'Book',

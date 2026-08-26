@@ -10,6 +10,12 @@ module.exports = async function handler(req, res) {
 
   const tmdbKey = process.env.TMDB_API_KEY;
   const omdbKey = process.env.OMDB_API_KEY;
+  const tmdbGenres = {
+    28: 'Acción', 12: 'Aventura', 16: 'Animación', 35: 'Comedia', 80: 'Crimen',
+    99: 'Documental', 18: 'Drama', 10751: 'Familia', 14: 'Fantasía', 36: 'Historia',
+    27: 'Terror', 10402: 'Música', 9648: 'Misterio', 10749: 'Romance',
+    878: 'Ciencia ficción', 10770: 'Película de TV', 53: 'Suspenso', 10752: 'Bélica', 37: 'Western',
+  };
 
   if (tmdbKey) {
     try {
@@ -25,6 +31,7 @@ module.exports = async function handler(req, res) {
         .map(item => ({
           title: item.title || item.name || 'Sin título',
           description: item.overview || '',
+          genre: item.genre_ids?.map(id => tmdbGenres[id]).filter(Boolean).join(', ') || '',
           image: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
           url: `https://www.themoviedb.org/${item.media_type}/${item.id}`,
           type: item.media_type === 'tv' ? 'Series' : 'Movie',
@@ -70,6 +77,7 @@ module.exports = async function handler(req, res) {
     const results = (data || []).slice(0, 20).map(item => ({
       title: item.show?.name || 'Sin título',
       description: item.show?.summary?.replace(/<[^>]*>/g, '').slice(0, 200) || '',
+      genre: item.show?.genres?.join(', ') || '',
       image: item.show?.image?.original || item.show?.image?.medium || '',
       url: item.show?.url || '',
       type: 'Series',
